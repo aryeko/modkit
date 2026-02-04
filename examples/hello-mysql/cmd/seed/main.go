@@ -2,24 +2,29 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/config"
+	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/logging"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/mysql"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/seed"
 )
 
 func main() {
 	cfg := config.Load()
+	logger := logging.New()
 	db, err := mysql.Open(cfg.MySQLDSN)
 	if err != nil {
-		log.Fatalf("open db failed: %v", err)
+		logger.Error("open db failed", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 	defer db.Close()
 
 	if err := seed.Seed(context.Background(), db); err != nil {
-		log.Fatalf("seed failed: %v", err)
+		logger.Error("seed failed", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 
-	log.Printf("seed complete")
+	logSeedComplete(logger)
 }
