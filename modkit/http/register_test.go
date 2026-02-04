@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -18,6 +19,15 @@ func (c *testController) RegisterRoutes(router Router) {
 
 func (c *testControllerB) RegisterRoutes(router Router) {
 	c.called = true
+}
+
+type orderedController struct {
+	name  string
+	order *[]string
+}
+
+func (c *orderedController) RegisterRoutes(router Router) {
+	*c.order = append(*c.order, c.name)
 }
 
 func TestRegisterRoutes_InvokesControllers(t *testing.T) {
@@ -59,5 +69,25 @@ func TestRegisterRoutes_DoesNotPartiallyRegister(t *testing.T) {
 
 	if ctrlA.called || ctrlB.called {
 		t.Fatalf("expected no controllers to be registered on error")
+	}
+}
+
+func TestRegisterRoutes_SortsControllerNames(t *testing.T) {
+	router := NewRouter()
+	order := []string{}
+	controllers := map[string]any{
+		"Zeta": &orderedController{name: "Zeta", order: &order},
+		"Alpha": &orderedController{name: "Alpha", order: &order},
+		"Beta": &orderedController{name: "Beta", order: &order},
+	}
+
+	err := RegisterRoutes(AsRouter(router), controllers)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	joined := strings.Join(order, ",")
+	if joined != "Alpha,Beta,Zeta" {
+		t.Fatalf("expected alphabetical order, got %q", joined)
 	}
 }

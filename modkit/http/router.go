@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"sort"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -41,8 +42,15 @@ func NewRouter() chi.Router {
 
 // RegisterRoutes invokes controller route registration functions.
 func RegisterRoutes(router Router, controllers map[string]any) error {
-	registrars := make([]RouteRegistrar, 0, len(controllers))
-	for name, controller := range controllers {
+	keys := make([]string, 0, len(controllers))
+	for name := range controllers {
+		keys = append(keys, name)
+	}
+	sort.Strings(keys)
+
+	registrars := make([]RouteRegistrar, 0, len(keys))
+	for _, name := range keys {
+		controller := controllers[name]
 		registrar, ok := controller.(RouteRegistrar)
 		if !ok {
 			return &RouteRegistrationError{Name: name}
