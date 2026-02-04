@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/modules/database"
+	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/logging"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/sqlc"
 	"github.com/aryeko/modkit/modkit/module"
 )
@@ -53,7 +54,7 @@ func (m Module) Definition() module.ModuleDef {
 					if err != nil {
 						return nil, err
 					}
-					return NewService(repoAny.(Repository)), nil
+					return NewService(repoAny.(Repository), logging.New()), nil
 				},
 			},
 		},

@@ -14,6 +14,7 @@ func main() {
 	cfg := config.Load()
 	ctx := context.Background()
 	logger := logging.New()
+	logMigrateDebug(logger, "starting migrations")
 
 	db, err := mysql.Open(cfg.MySQLDSN)
 	if err != nil {

@@ -45,7 +45,7 @@ func (s *stubRepo) DeleteUser(ctx context.Context, id int64) error {
 
 func TestService_CreateUser(t *testing.T) {
 	repo := &stubRepo{createUser: User{ID: 7, Name: "Ada", Email: "ada@example.com"}}
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	user, err := svc.CreateUser(context.Background(), CreateUserInput{Name: "Ada", Email: "ada@example.com"})
 	if err != nil {
@@ -61,7 +61,7 @@ func TestService_CreateUser(t *testing.T) {
 
 func TestService_ListUsers(t *testing.T) {
 	repo := &stubRepo{listUsers: []User{{ID: 1, Name: "Ada", Email: "ada@example.com"}}}
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	users, err := svc.ListUsers(context.Background())
 	if err != nil {
@@ -74,7 +74,7 @@ func TestService_ListUsers(t *testing.T) {
 
 func TestService_UpdateUser(t *testing.T) {
 	repo := &stubRepo{updateUser: User{ID: 2, Name: "Bea", Email: "bea@example.com"}}
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	updated, err := svc.UpdateUser(context.Background(), 2, UpdateUserInput{Name: "Bea", Email: "bea@example.com"})
 	if err != nil {
@@ -90,7 +90,7 @@ func TestService_UpdateUser(t *testing.T) {
 
 func TestService_DeleteUser(t *testing.T) {
 	repo := &stubRepo{}
-	svc := NewService(repo)
+	svc := NewService(repo, nil)
 
 	if err := svc.DeleteUser(context.Background(), 9); err != nil {
 		t.Fatalf("expected no error, got %v", err)

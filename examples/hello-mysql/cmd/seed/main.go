@@ -14,6 +14,7 @@ import (
 func main() {
 	cfg := config.Load()
 	logger := logging.New()
+	logSeedDebug(logger, "starting seed")
 	db, err := mysql.Open(cfg.MySQLDSN)
 	if err != nil {
 		logger.Error("open db failed", slog.String("error", err.Error()))
