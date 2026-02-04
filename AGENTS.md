@@ -29,6 +29,23 @@ This file provides short, focused guidance for contributors and AI agents. Keep 
 - One logical change per commit.
 - PRs should include summary + validation commands run.
 
+## Pull Request Requirements
+When creating PRs, follow `.github/pull_request_template.md` exactly:
+
+1. **Type section**: Check ALL types that apply (a PR can be `feat` + `docs` + `chore`).
+2. **Validation section**: Run ALL commands (`make fmt && make lint && make test`) and paste results.
+3. **Checklist section**: Verify EVERY item before submitting. All boxes must be checked.
+4. **Breaking Changes**: If controller keys, function signatures, or public API changes, document it.
+
+Before submitting:
+```bash
+make fmt      # Format code
+make lint     # Run linter (must pass)
+make test     # Run tests (must pass)
+```
+
+If any command fails, fix the issue before creating the PR.
+
 ## Agent Instruction Layout
 - Agent instructions can be stored in `AGENTS.md` files; the closest `AGENTS.md` in the directory tree takes precedence.
 - Keep instructions scoped and avoid conflicts across files.
