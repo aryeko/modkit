@@ -22,7 +22,7 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 make run
 ```
 
-This starts MySQL in Docker, runs migrations locally, and starts the app container.
+This starts MySQL in Docker, runs migrations locally, seeds data locally, and starts the app container.
 
 Then hit:
 
@@ -34,6 +34,12 @@ curl http://localhost:8080/users/1
 curl -X PUT http://localhost:8080/users/1 -H 'Content-Type: application/json' -d '{"name":"Ada Lovelace","email":"ada@example.com"}'
 curl -X DELETE http://localhost:8080/users/1
 open http://localhost:8080/swagger/index.html
+```
+
+You can seed separately with:
+
+```bash
+make seed
 ```
 
 Swagger docs are checked in. To regenerate them, run:

@@ -2,7 +2,7 @@ SHELL := /bin/sh
 GOPATH ?= $(shell go env GOPATH)
 SWAG ?= $(GOPATH)/bin/swag
 
-.PHONY: run test migrate compose-up compose-up-db compose-up-app compose-down sqlc swagger
+.PHONY: run test migrate seed compose-up compose-up-db compose-up-app compose-down sqlc swagger
 
 TEST_PACKAGES ?= ./...
 
@@ -21,7 +21,10 @@ compose-down:
 migrate:
 	go run ./cmd/migrate
 
-run: compose-up-db migrate compose-up-app
+seed:
+	go run ./cmd/seed
+
+run: compose-up-db migrate seed compose-up-app
 
 sqlc:
 	sqlc generate
