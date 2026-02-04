@@ -16,7 +16,7 @@ func (h *captureHandler) Handle(_ context.Context, r slog.Record) error {
 	return nil
 }
 func (h *captureHandler) WithAttrs(_ []slog.Attr) slog.Handler { return h }
-func (h *captureHandler) WithGroup(_ string) slog.Handler     { return h }
+func (h *captureHandler) WithGroup(_ string) slog.Handler      { return h }
 
 func TestSlogAdapter_EmitsRecords(t *testing.T) {
 	ch := &captureHandler{}

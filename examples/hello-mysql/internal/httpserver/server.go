@@ -6,9 +6,9 @@ import (
 
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/modules/app"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/logging"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
 	modkithttp "github.com/aryeko/modkit/modkit/http"
 	"github.com/aryeko/modkit/modkit/kernel"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func BuildHandler(opts app.Options) (http.Handler, error) {

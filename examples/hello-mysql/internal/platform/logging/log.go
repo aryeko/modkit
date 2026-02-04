@@ -142,11 +142,11 @@ func colorizeLevel(level slog.Level) string {
 }
 
 type prettyHandler struct {
-	w          io.Writer
-	cfg        config
-	attrs      []slog.Attr
-	groups     []string
-	mutex      chan struct{}
+	w      io.Writer
+	cfg    config
+	attrs  []slog.Attr
+	groups []string
+	mutex  chan struct{}
 }
 
 func newPrettyHandler(w io.Writer, cfg config) slog.Handler {

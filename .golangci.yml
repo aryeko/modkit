@@ -1,15 +1,6 @@
 run:
   timeout: 5m
   tests: true
-  skip-dirs:
-    - vendor
-    - third_party
-    - node_modules
-    - docs
-  skip-files:
-    - ".*_test\\.go"
-    - ".*\\.sql\\.go"
-    - ".*\\.pb\\.go"
 
 linters:
   enable:
@@ -24,6 +15,15 @@ linters:
 
 issues:
   exclude-use-default: false
+  exclude-dirs:
+    - vendor
+    - third_party
+    - node_modules
+    - docs
+  exclude-files:
+    - ".*_test\\.go"
+    - ".*\\.sql\\.go"
+    - ".*\\.pb\\.go"
   exclude-rules:
     - path: ".*_test\\.go"
       linters:

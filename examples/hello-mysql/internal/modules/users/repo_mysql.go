@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/sqlc"
+	"github.com/go-sql-driver/mysql"
 )
 
 type mysqlRepo struct {

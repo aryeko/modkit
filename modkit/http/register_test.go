@@ -76,9 +76,9 @@ func TestRegisterRoutes_SortsControllerNames(t *testing.T) {
 	router := NewRouter()
 	order := []string{}
 	controllers := map[string]any{
-		"Zeta": &orderedController{name: "Zeta", order: &order},
+		"Zeta":  &orderedController{name: "Zeta", order: &order},
 		"Alpha": &orderedController{name: "Alpha", order: &order},
-		"Beta": &orderedController{name: "Beta", order: &order},
+		"Beta":  &orderedController{name: "Beta", order: &order},
 	}
 
 	err := RegisterRoutes(AsRouter(router), controllers)

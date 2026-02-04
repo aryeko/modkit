@@ -6,8 +6,8 @@ import (
 	_ "github.com/aryeko/modkit/examples/hello-mysql/docs"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/httpserver"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/modules/app"
-	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/logging"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/config"
+	"github.com/aryeko/modkit/examples/hello-mysql/internal/platform/logging"
 	modkithttp "github.com/aryeko/modkit/modkit/http"
 )
 
