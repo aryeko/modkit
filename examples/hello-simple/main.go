@@ -25,7 +25,8 @@ const (
 	TokenCounter  module.Token = "greeting.counter"
 )
 
-// Counter tracks greeting count (demonstrates stateful providers)
+// Counter tracks greeting count (demonstrates stateful providers).
+// Note: not concurrency-safe; real applications should use sync.Mutex or atomic.
 type Counter struct {
 	count int
 }

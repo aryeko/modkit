@@ -35,7 +35,7 @@ Add automated commit message validation using Go-native tooling to enforce conve
 ### conventionalcommit/commitlint
 
 - **Purpose**: Validates commit messages against conventional commits spec
-- **Why**: Go-native, simple CLI interface
+- **Why**: Go-native, simple CLI
 - **Install**: `go install github.com/conventionalcommit/commitlint@latest`
 - **Docs**: https://github.com/conventionalcommit/commitlint
 
