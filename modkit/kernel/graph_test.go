@@ -76,9 +76,12 @@ func TestBuildGraphRejectsEmptyModuleName(t *testing.T) {
 		t.Fatalf("expected error for empty module name")
 	}
 
-	var nameErr *kernel.InvalidModuleNameError
-	if !errors.As(err, &nameErr) {
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
 		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
 	}
 }
 
@@ -181,22 +184,123 @@ func TestBuildGraphRejectsDuplicateModuleNames(t *testing.T) {
 	}
 }
 
-func TestBuildGraphRejectsDuplicateModuleNamesForValueModules(t *testing.T) {
-	modB1 := valueModule{def: module.ModuleDef{Name: "B"}}
-	modB2 := valueModule{def: module.ModuleDef{Name: "B"}}
-	modA := mod("A", []module.Module{modB1, modB2}, nil, nil, nil)
+func TestBuildGraphRejectsValueRootModule(t *testing.T) {
+	root := valueModule{def: module.ModuleDef{Name: "A"}}
 
-	_, err := kernel.BuildGraph(modA)
+	_, err := kernel.BuildGraph(root)
 	if err == nil {
-		t.Fatalf("expected error for duplicate module names")
+		t.Fatalf("expected error for value module root")
 	}
 
-	var dupErr *kernel.DuplicateModuleNameError
-	if !errors.As(err, &dupErr) {
+	var ptrErr *kernel.ModuleNotPointerError
+	if !errors.As(err, &ptrErr) {
 		t.Fatalf("unexpected error type: %T", err)
 	}
-	if dupErr.Name != "B" {
-		t.Fatalf("unexpected duplicate name: %q", dupErr.Name)
+	if ptrErr.Module != "A" {
+		t.Fatalf("unexpected module: %q", ptrErr.Module)
+	}
+}
+
+func TestBuildGraphRejectsValueImportModule(t *testing.T) {
+	imp := valueModule{def: module.ModuleDef{Name: "B"}}
+	root := mod("A", []module.Module{imp}, nil, nil, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for value module import")
+	}
+
+	var ptrErr *kernel.ModuleNotPointerError
+	if !errors.As(err, &ptrErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if ptrErr.Module != "B" {
+		t.Fatalf("unexpected module: %q", ptrErr.Module)
+	}
+}
+
+func TestBuildGraphRejectsProviderWithEmptyToken(t *testing.T) {
+	root := mod("A", nil, []module.ProviderDef{{}}, nil, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for provider with empty token")
+	}
+
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
+	}
+}
+
+func TestBuildGraphRejectsProviderWithNilBuild(t *testing.T) {
+	root := mod("A", nil, []module.ProviderDef{{Token: module.Token("t")}}, nil, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for provider with nil build")
+	}
+
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
+	}
+}
+
+func TestBuildGraphRejectsControllerWithEmptyName(t *testing.T) {
+	root := mod("A", nil, nil, []module.ControllerDef{{}}, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for controller with empty name")
+	}
+
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
+	}
+}
+
+func TestBuildGraphRejectsControllerWithNilBuild(t *testing.T) {
+	root := mod("A", nil, nil, []module.ControllerDef{{Name: "C"}}, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for controller with nil build")
+	}
+
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
+	}
+}
+
+func TestBuildGraphRejectsEmptyExportToken(t *testing.T) {
+	root := mod("A", nil, nil, nil, []module.Token{""})
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for empty export token")
+	}
+
+	var defErr *kernel.InvalidModuleDefError
+	if !errors.As(err, &defErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if !errors.Is(err, module.ErrInvalidModuleDef) {
+		t.Fatalf("expected ErrInvalidModuleDef")
 	}
 }
 

@@ -20,6 +20,27 @@ func (e *InvalidModuleNameError) Error() string {
 	return fmt.Sprintf("invalid module name: %q", e.Name)
 }
 
+type ModuleNotPointerError struct {
+	Module string
+}
+
+func (e *ModuleNotPointerError) Error() string {
+	return fmt.Sprintf("module must be a pointer: %q", e.Module)
+}
+
+type InvalidModuleDefError struct {
+	Module string
+	Reason string
+}
+
+func (e *InvalidModuleDefError) Error() string {
+	return fmt.Sprintf("invalid module definition: module=%q reason=%s", e.Module, e.Reason)
+}
+
+func (e *InvalidModuleDefError) Unwrap() error {
+	return module.ErrInvalidModuleDef
+}
+
 type NilImportError struct {
 	Module string
 	Index  int

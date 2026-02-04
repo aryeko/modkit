@@ -21,10 +21,10 @@ type Module struct {
 type AppModule = Module
 
 func NewModule(opts Options) module.Module {
-	return Module{opts: opts}
+	return &Module{opts: opts}
 }
 
-func (m Module) Definition() module.ModuleDef {
+func (m *Module) Definition() module.ModuleDef {
 	dbModule := database.NewModule(database.Options{DSN: m.opts.MySQLDSN})
 	usersModule := users.NewModule(users.Options{Database: dbModule})
 	auditModule := audit.NewModule(audit.Options{Users: usersModule})

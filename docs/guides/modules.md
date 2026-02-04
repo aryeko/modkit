@@ -16,6 +16,8 @@ A module is any type that implements:
 Definition() module.ModuleDef
 ```
 
+Modules must be passed as pointers (e.g. `&AppModule{}`); value modules are rejected so shared imports have stable identity.
+
 ## Tokens and Providers
 
 Tokens are `module.Token` values that identify providers. Providers are singletons created lazily when requested.

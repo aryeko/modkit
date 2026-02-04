@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/aryeko/modkit/modkit/module"
@@ -46,15 +47,16 @@ func BuildGraph(root module.Module) (*Graph, error) {
 			return &NilImportError{Module: "", Index: -1}
 		}
 		def := m.Definition()
-		name := def.Name
-		if name == "" {
-			return &InvalidModuleNameError{Name: name}
+		if val.Kind() != reflect.Ptr {
+			return &ModuleNotPointerError{Module: def.Name}
 		}
+		if err := validateModuleDef(def); err != nil {
+			return err
+		}
+		name := def.Name
 
 		id := uintptr(0)
-		if val.Kind() == reflect.Ptr {
-			id = val.Pointer()
-		}
+		id = val.Pointer()
 
 		if id == 0 {
 			if _, ok := identities[name]; ok {
@@ -141,4 +143,32 @@ func BuildGraph(root module.Module) (*Graph, error) {
 	}
 
 	return graph, nil
+}
+
+func validateModuleDef(def module.ModuleDef) error {
+	if def.Name == "" {
+		return &InvalidModuleDefError{Module: def.Name, Reason: "module name is empty"}
+	}
+	for i, provider := range def.Providers {
+		if provider.Token == "" {
+			return &InvalidModuleDefError{Module: def.Name, Reason: fmt.Sprintf("provider[%d] token is empty", i)}
+		}
+		if provider.Build == nil {
+			return &InvalidModuleDefError{Module: def.Name, Reason: fmt.Sprintf("provider[%d] build is nil", i)}
+		}
+	}
+	for i, controller := range def.Controllers {
+		if controller.Name == "" {
+			return &InvalidModuleDefError{Module: def.Name, Reason: fmt.Sprintf("controller[%d] name is empty", i)}
+		}
+		if controller.Build == nil {
+			return &InvalidModuleDefError{Module: def.Name, Reason: fmt.Sprintf("controller[%d] build is nil", i)}
+		}
+	}
+	for i, token := range def.Exports {
+		if token == "" {
+			return &InvalidModuleDefError{Module: def.Name, Reason: fmt.Sprintf("export[%d] token is empty", i)}
+		}
+	}
+	return nil
 }

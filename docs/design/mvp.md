@@ -60,7 +60,7 @@ modkit is a modular application kernel and thin web adapter for building backend
 |---|---|
 | `@Module({ imports, providers, controllers, exports })` | `module.ModuleDef` returned by `module.Module.Definition()` |
 | Provider token = class | `module.Token` string (type-safe generics may be added later) |
-| DI container | `kernel.Container` implementing `module.Resolver` |
+| DI container | Internal `kernel.Container`, accessed via `App.Resolver()` |
 | Module import/export visibility | Enforced by `kernel.Graph` and `kernel.Visibility` |
 | `NestFactory.create(AppModule)` | `kernel.Bootstrap(rootModule)` |
 
@@ -80,7 +80,7 @@ modkit is a modular application kernel and thin web adapter for building backend
    - Builds visibility map per module based on exports
    - Registers provider factories in container
    - Instantiates controllers (as singletons)
-   - Returns `App` containing container + module graph + controller registry
+   - Returns `App` containing module graph + controller registry, plus a root resolver via `App.Resolver()`/`App.Get()`
 3) HTTP adapter mounts routes by calling module route registration functions (no reflection)
 
 ---
@@ -104,16 +104,11 @@ modkit/
   docs/
     design/
       mvp.md                 (this document)
-      module-model.md        (module semantics + examples)
-      kernel.md              (graph/container/visibility)
       http-adapter.md        (routing + middleware)
     guides/
       getting-started.md
       modules.md
       testing.md
-    adr/
-      0001-tokens-over-reflection.md
-      0002-singleton-only-mvp.md
   modkit/
     module/
       module.go
@@ -209,6 +204,7 @@ Notes:
 #### Semantics
 
 - Module names must be unique in a graph (enforced by kernel).
+- Modules must be passed as pointers; value modules are rejected to keep module identity stable across imports.
 - Providers are resolved by token in the container.
 - Controllers are instantiated after providers.
 - Exports define which tokens are visible to importers.
@@ -221,11 +217,12 @@ Notes:
 
 - `type App struct {
     Graph *Graph
-    Container *Container
     Controllers map[string]any
   }`
 
 - `func Bootstrap(root module.Module) (*App, error)`
+- `func (a *App) Resolver() module.Resolver`
+- `func (a *App) Get(token module.Token) (any, error)`
 
 #### Semantics
 

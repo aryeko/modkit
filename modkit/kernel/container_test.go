@@ -11,7 +11,7 @@ import (
 	"github.com/aryeko/modkit/modkit/module"
 )
 
-func TestContainerMissingTokenError(t *testing.T) {
+func TestAppGetRejectsNotVisibleToken(t *testing.T) {
 	modA := mod("A", nil, nil, nil, nil)
 
 	app, err := kernel.Bootstrap(modA)
@@ -19,17 +19,17 @@ func TestContainerMissingTokenError(t *testing.T) {
 		t.Fatalf("Bootstrap failed: %v", err)
 	}
 
-	_, err = app.Container.Get(module.Token("missing"))
+	_, err = app.Get(module.Token("missing"))
 	if err == nil {
 		t.Fatalf("expected missing token error")
 	}
 
-	var notFound *kernel.ProviderNotFoundError
-	if !errors.As(err, &notFound) {
+	var notVisible *kernel.TokenNotVisibleError
+	if !errors.As(err, &notVisible) {
 		t.Fatalf("unexpected error type: %T", err)
 	}
-	if notFound.Token != module.Token("missing") {
-		t.Fatalf("unexpected token: %q", notFound.Token)
+	if notVisible.Token != module.Token("missing") {
+		t.Fatalf("unexpected token: %q", notVisible.Token)
 	}
 }
 
@@ -64,7 +64,7 @@ func TestContainerSingletonConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, _ = app.Container.Get(shared)
+			_, _ = app.Get(shared)
 		}()
 	}
 
@@ -96,7 +96,7 @@ func TestContainerDetectsSelfCycle(t *testing.T) {
 		t.Fatalf("Bootstrap failed: %v", err)
 	}
 
-	_, err = app.Container.Get(self)
+	_, err = app.Get(self)
 	if err == nil {
 		t.Fatalf("expected dependency cycle error")
 	}
@@ -132,7 +132,7 @@ func TestContainerDetectsMutualCycle(t *testing.T) {
 		t.Fatalf("Bootstrap failed: %v", err)
 	}
 
-	_, err = app.Container.Get(a)
+	_, err = app.Get(a)
 	if err == nil {
 		t.Fatalf("expected dependency cycle error")
 	}
@@ -173,11 +173,11 @@ func TestContainerDetectsConcurrentMutualCycle(t *testing.T) {
 
 	results := make(chan error, 2)
 	go func() {
-		_, err := app.Container.Get(a)
+		_, err := app.Get(a)
 		results <- err
 	}()
 	go func() {
-		_, err := app.Container.Get(b)
+		_, err := app.Get(b)
 		results <- err
 	}()
 
