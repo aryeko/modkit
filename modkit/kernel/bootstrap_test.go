@@ -50,6 +50,28 @@ func TestBootstrapEnforcesVisibility(t *testing.T) {
 	}
 }
 
+func TestBootstrapRejectsInvalidExport(t *testing.T) {
+	missing := module.Token("missing")
+
+	modA := mod("A", nil, nil, nil, []module.Token{missing})
+
+	_, err := kernel.Bootstrap(modA)
+	if err == nil {
+		t.Fatalf("expected export validation error")
+	}
+
+	var exportErr *kernel.ExportNotVisibleError
+	if !errors.As(err, &exportErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if exportErr.Module != "A" {
+		t.Fatalf("unexpected module: %q", exportErr.Module)
+	}
+	if exportErr.Token != missing {
+		t.Fatalf("unexpected token: %q", exportErr.Token)
+	}
+}
+
 func TestBootstrapAllowsReExportedTokens(t *testing.T) {
 	shared := module.Token("shared")
 

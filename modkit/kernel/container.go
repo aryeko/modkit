@@ -15,6 +15,7 @@ type Container struct {
 	providers  map[module.Token]providerEntry
 	instances  map[module.Token]any
 	visibility Visibility
+	locks      map[module.Token]*sync.Mutex
 	mu         sync.Mutex
 }
 
@@ -39,24 +40,43 @@ func newContainer(graph *Graph, visibility Visibility) (*Container, error) {
 		providers:  providers,
 		instances:  make(map[module.Token]any),
 		visibility: visibility,
+		locks:      make(map[module.Token]*sync.Mutex),
 	}, nil
 }
 
+// Get resolves a provider without module visibility checks.
+// Visibility enforcement is applied via module-scoped resolvers.
 func (c *Container) Get(token module.Token) (any, error) {
 	return c.get(token, "")
 }
 
 func (c *Container) get(token module.Token, requester string) (any, error) {
-	c.mu.Lock()
-	instance, ok := c.instances[token]
-	c.mu.Unlock()
-	if ok {
-		return instance, nil
-	}
-
 	entry, ok := c.providers[token]
 	if !ok {
 		return nil, &ProviderNotFoundError{Module: requester, Token: token}
+	}
+
+	c.mu.Lock()
+	instance, ok := c.instances[token]
+	lock, lockExists := c.locks[token]
+	if ok {
+		c.mu.Unlock()
+		return instance, nil
+	}
+	if !lockExists {
+		lock = &sync.Mutex{}
+		c.locks[token] = lock
+	}
+	c.mu.Unlock()
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	c.mu.Lock()
+	instance, ok = c.instances[token]
+	c.mu.Unlock()
+	if ok {
+		return instance, nil
 	}
 
 	resolver := moduleResolver{

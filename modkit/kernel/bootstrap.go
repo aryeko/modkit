@@ -14,7 +14,10 @@ func Bootstrap(root module.Module) (*App, error) {
 		return nil, err
 	}
 
-	visibility := buildVisibility(graph)
+	visibility, err := buildVisibility(graph)
+	if err != nil {
+		return nil, err
+	}
 
 	container, err := newContainer(graph, visibility)
 	if err != nil {

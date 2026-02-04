@@ -43,6 +43,15 @@ func (e *TokenNotVisibleError) Error() string {
 	return fmt.Sprintf("token not visible: module=%q token=%q", e.Module, e.Token)
 }
 
+type ExportNotVisibleError struct {
+	Module string
+	Token  module.Token
+}
+
+func (e *ExportNotVisibleError) Error() string {
+	return fmt.Sprintf("export not visible: module=%q token=%q", e.Module, e.Token)
+}
+
 type ProviderNotFoundError struct {
 	Module string
 	Token  module.Token
