@@ -168,6 +168,7 @@ func (h *prettyHandler) Handle(_ context.Context, record slog.Record) error {
 	builder := strings.Builder{}
 	timeStr := h.formatTime(record.Time)
 	levelStr := h.formatLevel(record.Level)
+	scope := h.extractScope(record)
 
 	if timeStr != "" {
 		builder.WriteString(timeStr)
@@ -176,6 +177,11 @@ func (h *prettyHandler) Handle(_ context.Context, record slog.Record) error {
 	if levelStr != "" {
 		builder.WriteString(levelStr)
 		builder.WriteString("  ")
+	}
+	if scope != "" {
+		builder.WriteString("[")
+		builder.WriteString(scope)
+		builder.WriteString("] ")
 	}
 	builder.WriteString(record.Message)
 
@@ -221,9 +227,15 @@ func (h *prettyHandler) clone() *prettyHandler {
 func (h *prettyHandler) collectAttrs(record slog.Record) []string {
 	fields := make([]string, 0, record.NumAttrs()+len(h.attrs))
 	for _, attr := range h.attrs {
+		if attr.Key == "scope" {
+			continue
+		}
 		fields = append(fields, h.formatAttr(attr))
 	}
 	record.Attrs(func(attr slog.Attr) bool {
+		if attr.Key == "scope" {
+			return true
+		}
 		fields = append(fields, h.formatAttr(attr))
 		return true
 	})
@@ -253,6 +265,23 @@ func (h *prettyHandler) formatLevel(level slog.Level) string {
 		return colorizeLevel(level)
 	}
 	return levelStr
+}
+
+func (h *prettyHandler) extractScope(record slog.Record) string {
+	for _, attr := range h.attrs {
+		if attr.Key == "scope" {
+			return attr.Value.String()
+		}
+	}
+	var scope string
+	record.Attrs(func(attr slog.Attr) bool {
+		if attr.Key == "scope" {
+			scope = attr.Value.String()
+			return false
+		}
+		return true
+	})
+	return scope
 }
 
 func (h *prettyHandler) lock() {

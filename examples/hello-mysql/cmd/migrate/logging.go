@@ -10,5 +10,6 @@ func logMigrateComplete(logger modkitlogging.Logger) {
 	if logger == nil {
 		logger = modkitlogging.Nop()
 	}
-	logger.Info("migrations complete", slog.String("component", "migrate"))
+	logger = logger.With(slog.String("scope", "migrate"))
+	logger.Info("migrations complete")
 }

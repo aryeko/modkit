@@ -10,5 +10,6 @@ func logSeedComplete(logger modkitlogging.Logger) {
 	if logger == nil {
 		logger = modkitlogging.Nop()
 	}
-	logger.Info("seed complete", slog.String("component", "seed"))
+	logger = logger.With(slog.String("scope", "seed"))
+	logger.Info("seed complete")
 }

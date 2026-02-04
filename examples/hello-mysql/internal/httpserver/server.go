@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/modules/app"
@@ -17,7 +18,7 @@ func BuildHandler(opts app.Options) (http.Handler, error) {
 		return nil, err
 	}
 
-	logger := logging.New()
+	logger := logging.New().With(slog.String("scope", "httpserver"))
 	router := modkithttp.NewRouter()
 	router.Use(modkithttp.RequestLogger(logger))
 	if err := modkithttp.RegisterRoutes(modkithttp.AsRouter(router), boot.Controllers); err != nil {

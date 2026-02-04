@@ -18,7 +18,10 @@ func (c *captureLogger) Info(msg string, attrs ...slog.Attr) {
 	c.attrs = append(c.attrs, attrs...)
 }
 func (c *captureLogger) Error(string, ...slog.Attr) {}
-func (c *captureLogger) With(...slog.Attr) modkitlogging.Logger { return c }
+func (c *captureLogger) With(attrs ...slog.Attr) modkitlogging.Logger {
+	c.attrs = append(c.attrs, attrs...)
+	return c
+}
 
 func TestLogStartup_EmitsMessage(t *testing.T) {
 	logger := &captureLogger{}
@@ -40,5 +43,16 @@ func TestLogStartup_EmitsMessage(t *testing.T) {
 	}
 	if addr != ":8080" {
 		t.Fatalf("expected addr :8080, got %q", addr)
+	}
+
+	var scope string
+	for _, attr := range logger.attrs {
+		if attr.Key == "scope" {
+			scope = attr.Value.String()
+			break
+		}
+	}
+	if scope != "api" {
+		t.Fatalf("expected scope api, got %q", scope)
 	}
 }
