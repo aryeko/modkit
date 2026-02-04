@@ -1,0 +1,38 @@
+package http
+
+import (
+	"net/http"
+	"testing"
+)
+
+type testController struct{ called bool }
+
+func (c *testController) RegisterRoutes(router Router) {
+	c.called = true
+	router.Handle(http.MethodGet, "/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+}
+
+func TestRegisterRoutes_InvokesControllers(t *testing.T) {
+	router := NewRouter()
+	ctrl := &testController{}
+
+	err := RegisterRoutes(router, map[string]any{"Test": ctrl})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !ctrl.called {
+		t.Fatalf("expected controller RegisterRoutes to be called")
+	}
+}
+
+func TestRegisterRoutes_ErrsOnMissingRegistrar(t *testing.T) {
+	router := NewRouter()
+
+	err := RegisterRoutes(router, map[string]any{"Test": struct{}{}})
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+}
