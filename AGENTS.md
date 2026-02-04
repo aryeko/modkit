@@ -29,7 +29,5 @@ This file provides short, focused guidance for contributors and AI agents. Keep 
 - PRs should include summary + validation commands run.
 
 ## Agent Instruction Layout
-- Repository-wide instructions can live in `.github/copilot-instructions.md`.
-- Path-scoped instructions can live in `.github/instructions/*.instructions.md` with YAML frontmatter and `applyTo` globs; you can use `excludeAgent` to target specific Copilot agents.
 - Agent instructions can be stored in `AGENTS.md` files; the closest `AGENTS.md` in the directory tree takes precedence.
-- Repository-wide and path-scoped instructions can both apply; avoid conflicting guidance because Copilot may resolve conflicts non-deterministically.
+- Keep instructions scoped and avoid conflicts across files.
