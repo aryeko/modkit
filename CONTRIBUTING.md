@@ -1,19 +1,43 @@
 # Contributing to modkit
 
-Thanks for your interest in contributing. This project is in early MVP development, so the best way to help is to coordinate with maintainers before large changes.
+Thanks for your interest in contributing! modkit is in early development, so the best way to help is to coordinate with maintainers before large changes.
 
-## Development setup
+## Getting Started
+
+### Prerequisites
+
+- Go 1.22+
+- Docker (for running the example app)
+- Make
+
+### Clone and Test
 
 ```bash
+git clone https://github.com/aryeko/modkit.git
+cd modkit
 go test ./...
+```
+
+### Run the Example App
+
+```bash
+cd examples/hello-mysql
+make run
+```
+
+Then test:
+
+```bash
+curl http://localhost:8080/health
+curl http://localhost:8080/users
 ```
 
 ### Setup Git Hooks
 
-After cloning the repository, ensure `$GOPATH/bin` is in your PATH (required for git hooks):
+After cloning, ensure `$GOPATH/bin` is in your PATH:
 
 ```bash
-# Add to your shell profile (.bashrc, .zshrc, etc.) if not already present
+# Add to your shell profile (.bashrc, .zshrc, etc.)
 export PATH="$(go env GOPATH)/bin:$PATH"
 ```
 
@@ -36,19 +60,90 @@ Examples:
 
 Valid types: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `perf`, `ci`
 
-**Note**: Commit messages must be ≤50 characters for the header
+**Note**: Commit message headers must be ≤50 characters.
 
-## Guidelines
+## Development Workflow
 
-- Contribute via fork + pull request (recommended). Direct pushes to the main repo are restricted.
-- Follow Go formatting with `gofmt`.
-- Run `make fmt` before committing.
-- Run `make lint` for lint checks.
-- Run `make vuln` for Go vulnerability checks.
-- See `docs/tooling.md` for tool install and usage details.
-- Keep changes focused and aligned to the current phase docs under `docs/implementation/`.
-- Prefer small, reviewable PRs.
+### Format Code
+
+```bash
+make fmt
+```
+
+Runs `gofmt` and `goimports`.
+
+### Lint
+
+```bash
+make lint
+```
+
+Runs `golangci-lint`. See `.golangci.yml` for configuration.
+
+### Vulnerability Check
+
+```bash
+make vuln
+```
+
+Runs `govulncheck`.
+
+### Run Tests
+
+```bash
+make test
+```
+
+### Install Development Tools
+
+```bash
+# goimports (for make fmt)
+go install golang.org/x/tools/cmd/goimports@latest
+
+# golangci-lint (for make lint)
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# govulncheck (for make vuln)
+go install golang.org/x/vuln/cmd/govulncheck@latest
+```
+
+## Contribution Guidelines
+
+### Before You Start
+
+- Check existing issues to avoid duplicating work
+- For large changes, open an issue first to discuss the approach
+- Read the [Architecture Guide](docs/architecture.md) to understand the codebase
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feat/my-feature`)
+3. Make your changes with tests
+4. Run `make fmt && make lint && make test`
+5. Commit with a conventional prefix (`feat:`, `fix:`, `docs:`, `chore:`)
+6. Open a pull request with a clear description
+
+### Commit Prefixes
+
+- `feat:` — New feature
+- `fix:` — Bug fix
+- `docs:` — Documentation only
+- `test:` — Test changes
+- `chore:` — Build, CI, or tooling changes
+- `refactor:` — Code change that doesn't fix a bug or add a feature
+
+### Code Style
+
+- Follow Go formatting (`gofmt`)
+- Keep exported API minimal
+- Prefer explicit errors over panics
+- Write tests for new functionality
 
 ## Code of Conduct
 
-This project follows the Code of Conduct in `CODE_OF_CONDUCT.md`.
+This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Questions?
+
+Open an issue or start a discussion. We're happy to help!
