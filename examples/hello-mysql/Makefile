@@ -2,6 +2,8 @@ SHELL := /bin/sh
 
 .PHONY: run test migrate compose-up compose-down sqlc
 
+TEST_PACKAGES ?= ./...
+
 compose-up:
 	docker compose up -d
 
@@ -18,4 +20,4 @@ sqlc:
 	sqlc generate
 
 test:
-	go test ./...
+	go test $(TEST_PACKAGES)
