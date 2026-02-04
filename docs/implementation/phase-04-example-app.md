@@ -11,6 +11,7 @@
 - Include SQL schema, sqlc config, and migrations.
 - Provide a working endpoint group (GET/POST) plus a `/health` endpoint.
 - Add Makefile targets: `make run`, `make test`.
+- Default HTTP listen address for the example app is `:8080` (used by smoke tests).
 
 ## Design
 - Source of truth: `modkit_mvp_design_doc.md` Sections 4.2, 6, 8.2, 10.4.
@@ -21,10 +22,10 @@
 Run:
 - `go test ./examples/hello-mysql/...`
 - `make test` (from `examples/hello-mysql`)
-- Manual smoke (if required by phase):
-  - `make run`
-  - `curl /health`
-  - `curl` one CRUD endpoint
+- Manual smoke (required):
+  - `make run` (server listens on `http://localhost:8080`)
+  - `curl http://localhost:8080/health` → `200` and body `{\"status\":\"ok\"}` (or equivalent JSON with status ok)
+  - `curl` one CRUD endpoint (GET or POST) → `200` or `201` with non-empty JSON body
 
 Expected:
 - All tests and smoke checks pass.

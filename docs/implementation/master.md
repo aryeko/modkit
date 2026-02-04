@@ -3,7 +3,8 @@
 This is the master index for the modkit MVP implementation. Each phase is a separately validated and committed unit of work, with its own assumptions, requirements, design notes, and validation steps. Do not start a phase unless its assumptions are true.
 
 ## Canonical Design Source
-- `modkit_mvp_design_doc.md` is the source of truth for MVP scope, architecture, and validation criteria.
+- `docs/design/mvp.md` is the source of truth for MVP scope, architecture, and validation criteria.
+- If `modkit_mvp_design_doc.md` remains at repo root, it should be a short pointer to `docs/design/mvp.md` to avoid duplication.
 
 ## Phase Structure (applies to every phase)
 Each phase doc contains:

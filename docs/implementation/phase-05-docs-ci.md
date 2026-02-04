@@ -10,7 +10,7 @@
   - Guides: `docs/guides/getting-started.md`, `docs/guides/modules.md`, `docs/guides/testing.md`.
 - Ensure `docs/design/mvp.md` exists (from Phase 00).
 - CI workflow runs `go test ./...` for library and example (or same command if monorepo).
-- Optionally add `golangci-lint` workflow step.
+- Optional stretch (not required for phase completion): add `golangci-lint` workflow step.
 
 ## Design
 - Source of truth: `modkit_mvp_design_doc.md` Sections 4.1, 10.2, 10.3.
@@ -19,7 +19,7 @@
 ## Validation
 Run:
 - `go test ./...`
-- (If lint enabled) `golangci-lint run`.
+- If lint was added: `golangci-lint run`.
 
 Expected:
 - All checks pass.

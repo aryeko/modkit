@@ -2,7 +2,7 @@
 
 ## Assumptions (Initial State)
 - GitHub repo exists: `aryeko/modkit`.
-- Local repo cloned and `origin` points to `git@github.com-personal:aryeko/modkit.git`.
+- Local repo cloned and `origin` is configured for push access (SSH or HTTPS).
 - `modkit_mvp_design_doc.md` exists at repo root and is committed.
 
 ## Requirements
@@ -13,7 +13,8 @@
   - `CONTRIBUTING.md`
   - `CODE_OF_CONDUCT.md`
   - `SECURITY.md`
-- Add `docs/design/mvp.md` copied from `modkit_mvp_design_doc.md`.
+- Create `docs/design/mvp.md` as the canonical design doc by moving the contents of `modkit_mvp_design_doc.md`.
+- Replace `modkit_mvp_design_doc.md` with a short pointer to `docs/design/mvp.md` (or remove it entirely).
 - Add CI workflow: `go test ./...`.
 
 ## Design

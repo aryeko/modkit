@@ -2,7 +2,8 @@
 
 ## Assumptions (Initial State)
 - Phase 00 is complete and committed.
-- `docs/design/mvp.md` exists and matches `modkit_mvp_design_doc.md`.
+- `docs/design/mvp.md` exists and is the canonical MVP design doc.
+- If `modkit_mvp_design_doc.md` exists, it is a short pointer to the canonical doc.
 
 ## Requirements
 - Implement public package `modkit/module` with types and errors defined in `modkit_mvp_design_doc.md` Section 5.1.

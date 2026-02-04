@@ -12,6 +12,7 @@
 - Source of truth: `modkit_mvp_design_doc.md` Section 5.3 and Section 3.3.
 - No reflection; routing is explicit via module route registration functions.
 - `NewRouter()` returns a `chi.Router` with baseline middleware.
+- Use `github.com/go-chi/chi/v5` as the router dependency.
 
 ## Validation
 Run:
