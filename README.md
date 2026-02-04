@@ -70,6 +70,12 @@ Guides:
 - `docs/guides/modules.md`
 - `docs/guides/testing.md`
 
+## Tooling
+
+- Format: `make fmt` (uses `gofmt` and `goimports`)
+- Lint: `make lint` (uses `golangci-lint`)
+- Vulnerability scan: `make vuln` (uses `govulncheck`)
+
 ## Architecture Overview
 
 - **module**: metadata for imports/providers/controllers/exports.

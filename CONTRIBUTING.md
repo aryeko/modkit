@@ -11,6 +11,9 @@ go test ./...
 ## Guidelines
 
 - Follow Go formatting with `gofmt`.
+- Run `make fmt` before committing.
+- Run `make lint` for lint checks.
+- Run `make vuln` for Go vulnerability checks.
 - Keep changes focused and aligned to the current phase docs under `docs/implementation/`.
 - Prefer small, reviewable PRs.
 

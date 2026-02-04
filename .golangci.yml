@@ -1,0 +1,30 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+    - third_party
+    - node_modules
+    - docs
+  skip-files:
+    - ".*_test\\.go"
+    - ".*\\.sql\\.go"
+    - ".*\\.pb\\.go"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - ineffassign
+    - gofmt
+    - goimports
+    - misspell
+    - unused
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: ".*_test\\.go"
+      linters:
+        - errcheck
