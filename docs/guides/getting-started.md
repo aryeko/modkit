@@ -40,7 +40,7 @@ func (c *GreetingController) RegisterRoutes(r mkhttp.Router) {
 
 type AppModule struct{}
 
-func (m AppModule) Definition() module.ModuleDef {
+func (m *AppModule) Definition() module.ModuleDef {
     return module.ModuleDef{
         Name: "app",
         Providers: []module.ProviderDef{
@@ -68,6 +68,8 @@ func (m AppModule) Definition() module.ModuleDef {
 }
 ```
 
+Modules must be passed as pointers so shared imports have stable identities.
+
 ## Bootstrap and Serve
 
 ```go
@@ -83,7 +85,7 @@ import (
 )
 
 func main() {
-    appInstance, err := kernel.Bootstrap(app.AppModule{})
+    appInstance, err := kernel.Bootstrap(&app.AppModule{})
     if err != nil {
         log.Fatal(err)
     }

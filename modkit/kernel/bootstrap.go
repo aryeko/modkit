@@ -4,7 +4,7 @@ import "github.com/aryeko/modkit/modkit/module"
 
 type App struct {
 	Graph       *Graph
-	Container   *Container
+	container   *Container
 	Controllers map[string]any
 }
 
@@ -41,7 +41,17 @@ func Bootstrap(root module.Module) (*App, error) {
 
 	return &App{
 		Graph:       graph,
-		Container:   container,
+		container:   container,
 		Controllers: controllers,
 	}, nil
+}
+
+// Resolver returns a root-scoped resolver that enforces module visibility.
+func (a *App) Resolver() module.Resolver {
+	return a.container.resolverFor(a.Graph.Root)
+}
+
+// Get resolves a token from the root module scope.
+func (a *App) Get(token module.Token) (any, error) {
+	return a.Resolver().Get(token)
 }

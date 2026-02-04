@@ -16,10 +16,10 @@ type Module struct {
 }
 
 func NewModule(opts Options) module.Module {
-	return Module{opts: opts}
+	return &Module{opts: opts}
 }
 
-func (m Module) Definition() module.ModuleDef {
+func (m *Module) Definition() module.ModuleDef {
 	return module.ModuleDef{
 		Name:    "audit",
 		Imports: []module.Module{m.opts.Users},
