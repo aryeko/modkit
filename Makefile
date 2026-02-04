@@ -14,7 +14,8 @@ fmt: tools
 	$(GOIMPORTS) -w .
 
 lint:
-	$(GOLANGCI_LINT) run --tests=false
+	@mkdir -p /tmp/golangci-lint /tmp/go-build
+	GOCACHE=/tmp/go-build XDG_CACHE_HOME=/tmp GOLANGCI_LINT_CACHE=/tmp/golangci-lint $(GOLANGCI_LINT) run --tests=false
 
 vuln:
 	$(GOVULNCHECK) ./...
