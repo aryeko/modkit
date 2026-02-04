@@ -69,3 +69,4 @@ Environment variables:
 - `LOG_LEVEL` (`debug`, `info`, `warn`, `error`, default `info`)
 - `LOG_COLOR` (`auto`, `on`, `off`, default `auto`)
 - `LOG_TIME` (`local`, `utc`, `none`, default `local`)
+- `LOG_STYLE` (`pretty`, `plain`, `multiline`, default `pretty`, text only)

@@ -23,6 +23,9 @@ func TestParseConfigDefaults(t *testing.T) {
 	if cfg.timeFormat != "local" {
 		t.Fatalf("expected time local, got %s", cfg.timeFormat)
 	}
+	if cfg.style != "pretty" {
+		t.Fatalf("expected style pretty, got %s", cfg.style)
+	}
 }
 
 func TestParseConfigOverrides(t *testing.T) {
@@ -31,6 +34,7 @@ func TestParseConfigOverrides(t *testing.T) {
 	t.Setenv("LOG_LEVEL", "debug")
 	t.Setenv("LOG_COLOR", "on")
 	t.Setenv("LOG_TIME", "utc")
+	t.Setenv("LOG_STYLE", "plain")
 
 	cfg := parseConfig()
 	if cfg.format != "json" {
@@ -44,6 +48,9 @@ func TestParseConfigOverrides(t *testing.T) {
 	}
 	if cfg.timeFormat != "utc" {
 		t.Fatalf("expected time utc, got %s", cfg.timeFormat)
+	}
+	if cfg.style != "plain" {
+		t.Fatalf("expected style plain, got %s", cfg.style)
 	}
 }
 
@@ -62,6 +69,47 @@ func TestBuildHandler_TextColorOn(t *testing.T) {
 	}
 	if !strings.Contains(out, "\x1b[") && !strings.Contains(out, "\\x1b[") {
 		t.Fatalf("expected color codes, got %s", out)
+	}
+}
+
+func TestBuildHandler_TextPrettyFormat(t *testing.T) {
+	clearEnv()
+	t.Setenv("LOG_FORMAT", "text")
+	t.Setenv("LOG_STYLE", "pretty")
+	t.Setenv("LOG_COLOR", "off")
+
+	var buf bytes.Buffer
+	logger := newLogger(&buf)
+	logger.Info("server starting", slog.String("addr", ":8080"))
+
+	out := buf.String()
+	if !strings.Contains(out, "INFO") {
+		t.Fatalf("expected level INFO, got %s", out)
+	}
+	if !strings.Contains(out, "addr=:8080") {
+		t.Fatalf("expected addr field, got %s", out)
+	}
+	if !strings.Contains(out, "  ") {
+		t.Fatalf("expected spacing between columns, got %s", out)
+	}
+}
+
+func TestBuildHandler_TextMultilineFormat(t *testing.T) {
+	clearEnv()
+	t.Setenv("LOG_FORMAT", "text")
+	t.Setenv("LOG_STYLE", "multiline")
+	t.Setenv("LOG_COLOR", "off")
+
+	var buf bytes.Buffer
+	logger := newLogger(&buf)
+	logger.Info("server starting", slog.String("addr", ":8080"))
+
+	out := buf.String()
+	if !strings.Contains(out, "\n  ") {
+		t.Fatalf("expected multiline output, got %s", out)
+	}
+	if !strings.Contains(out, "addr=:8080") {
+		t.Fatalf("expected addr field, got %s", out)
 	}
 }
 
@@ -87,4 +135,5 @@ func clearEnv() {
 	_ = os.Unsetenv("LOG_LEVEL")
 	_ = os.Unsetenv("LOG_COLOR")
 	_ = os.Unsetenv("LOG_TIME")
+	_ = os.Unsetenv("LOG_STYLE")
 }

@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
@@ -16,6 +17,7 @@ type config struct {
 	level      slog.Level
 	color      string
 	timeFormat string
+	style      string
 }
 
 func New() modkitlogging.Logger {
@@ -35,6 +37,7 @@ func parseConfig() config {
 		level:      slog.LevelInfo,
 		color:      envDefault("LOG_COLOR", "auto"),
 		timeFormat: envDefault("LOG_TIME", "local"),
+		style:      envDefault("LOG_STYLE", "pretty"),
 	}
 
 	levelValue := strings.ToLower(envDefault("LOG_LEVEL", "info"))
@@ -58,6 +61,9 @@ func parseConfig() config {
 	if cfg.timeFormat != "local" && cfg.timeFormat != "utc" && cfg.timeFormat != "none" {
 		cfg.timeFormat = "local"
 	}
+	if cfg.style != "pretty" && cfg.style != "plain" && cfg.style != "multiline" {
+		cfg.style = "pretty"
+	}
 
 	return cfg
 }
@@ -76,7 +82,7 @@ func buildHandler(cfg config, w io.Writer) slog.Handler {
 					}
 				}
 			}
-			if attr.Key == slog.LevelKey && cfg.format == "text" && colorEnabled(cfg.color, w) {
+			if attr.Key == slog.LevelKey && cfg.format == "text" && cfg.style == "plain" && colorEnabled(cfg.color, w) {
 				level := attr.Value.Any().(slog.Level)
 				attr.Value = slog.StringValue(colorizeLevel(level))
 			}
@@ -87,7 +93,10 @@ func buildHandler(cfg config, w io.Writer) slog.Handler {
 	if cfg.format == "json" {
 		return slog.NewJSONHandler(w, opts)
 	}
-	return slog.NewTextHandler(w, opts)
+	if cfg.style == "plain" {
+		return slog.NewTextHandler(w, opts)
+	}
+	return newPrettyHandler(w, cfg)
 }
 
 func envDefault(key, fallback string) string {
@@ -130,4 +139,126 @@ func colorizeLevel(level slog.Level) string {
 	default:
 		return level.String()
 	}
+}
+
+type prettyHandler struct {
+	w          io.Writer
+	cfg        config
+	attrs      []slog.Attr
+	groups     []string
+	mutex      chan struct{}
+}
+
+func newPrettyHandler(w io.Writer, cfg config) slog.Handler {
+	return &prettyHandler{
+		w:     w,
+		cfg:   cfg,
+		mutex: make(chan struct{}, 1),
+	}
+}
+
+func (h *prettyHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level >= h.cfg.level
+}
+
+func (h *prettyHandler) Handle(_ context.Context, record slog.Record) error {
+	h.lock()
+	defer h.unlock()
+
+	builder := strings.Builder{}
+	timeStr := h.formatTime(record.Time)
+	levelStr := h.formatLevel(record.Level)
+
+	if timeStr != "" {
+		builder.WriteString(timeStr)
+		builder.WriteString(" ")
+	}
+	if levelStr != "" {
+		builder.WriteString(levelStr)
+		builder.WriteString("  ")
+	}
+	builder.WriteString(record.Message)
+
+	fields := h.collectAttrs(record)
+	if len(fields) > 0 {
+		switch h.cfg.style {
+		case "multiline":
+			builder.WriteString("\n  ")
+			builder.WriteString(strings.Join(fields, " "))
+		default:
+			builder.WriteString("  ")
+			builder.WriteString(strings.Join(fields, " "))
+		}
+	}
+	builder.WriteString("\n")
+
+	_, err := io.WriteString(h.w, builder.String())
+	return err
+}
+
+func (h *prettyHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	clone := h.clone()
+	clone.attrs = append(clone.attrs, attrs...)
+	return clone
+}
+
+func (h *prettyHandler) WithGroup(name string) slog.Handler {
+	clone := h.clone()
+	clone.groups = append(clone.groups, name)
+	return clone
+}
+
+func (h *prettyHandler) clone() *prettyHandler {
+	return &prettyHandler{
+		w:      h.w,
+		cfg:    h.cfg,
+		attrs:  append([]slog.Attr{}, h.attrs...),
+		groups: append([]string{}, h.groups...),
+		mutex:  h.mutex,
+	}
+}
+
+func (h *prettyHandler) collectAttrs(record slog.Record) []string {
+	fields := make([]string, 0, record.NumAttrs()+len(h.attrs))
+	for _, attr := range h.attrs {
+		fields = append(fields, h.formatAttr(attr))
+	}
+	record.Attrs(func(attr slog.Attr) bool {
+		fields = append(fields, h.formatAttr(attr))
+		return true
+	})
+	return fields
+}
+
+func (h *prettyHandler) formatAttr(attr slog.Attr) string {
+	if len(h.groups) > 0 {
+		attr.Key = strings.Join(h.groups, ".") + "." + attr.Key
+	}
+	return attr.Key + "=" + attr.Value.String()
+}
+
+func (h *prettyHandler) formatTime(t time.Time) string {
+	if h.cfg.timeFormat == "none" || t.IsZero() {
+		return ""
+	}
+	if h.cfg.timeFormat == "utc" {
+		t = t.UTC()
+	}
+	return t.Format("15:04:05")
+}
+
+func (h *prettyHandler) formatLevel(level slog.Level) string {
+	levelStr := strings.ToUpper(level.String())
+	if h.cfg.format == "text" && colorEnabled(h.cfg.color, h.w) {
+		return colorizeLevel(level)
+	}
+	return levelStr
+}
+
+func (h *prettyHandler) lock() {
+	h.mutex <- struct{}{}
+}
+
+func (h *prettyHandler) unlock() {
+	<-h.mutex
 }
