@@ -15,6 +15,7 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 - MySQL via docker-compose for local runs.
 - Testcontainers for integration smoke tests.
 - Migrations and sqlc-generated queries.
+- JSON request logging via `log/slog`.
 
 ## Run (Docker Compose + Local Migrate)
 

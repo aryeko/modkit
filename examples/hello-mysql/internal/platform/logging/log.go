@@ -1,14 +1,13 @@
 package logging
 
 import (
-	"log"
+	"log/slog"
 	"os"
+
+	modkitlogging "github.com/aryeko/modkit/modkit/logging"
 )
 
-type Logger struct {
-	*log.Logger
-}
-
-func New() *Logger {
-	return &Logger{Logger: log.New(os.Stdout, "", log.LstdFlags)}
+func New() modkitlogging.Logger {
+	handler := slog.NewJSONHandler(os.Stdout, nil)
+	return modkitlogging.NewSlog(slog.New(handler))
 }
