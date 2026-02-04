@@ -144,6 +144,15 @@ go install golang.org/x/vuln/cmd/govulncheck@latest
 
 This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
+## Good First Issues
+
+New to modkit? Look for issues labeled [`good first issue`](https://github.com/aryeko/modkit/labels/good%20first%20issue) for beginner-friendly tasks:
+
+- Documentation improvements
+- Test coverage
+- Example app enhancements
+- Bug fixes with clear reproduction steps
+
 ## Questions?
 
 Open an issue or start a discussion. We're happy to help!

@@ -11,12 +11,25 @@ modkit brings NestJS-style module organization to Go—without reflection, decor
 
 ## Why modkit?
 
+modkit is a Go-idiomatic alternative to decorator-driven frameworks. It keeps wiring explicit, avoids reflection, and makes module boundaries and dependencies visible in code.
+
 | If you want... | modkit gives you... |
 |----------------|---------------------|
 | NestJS-style modules in Go | `imports`, `providers`, `controllers`, `exports` |
 | Explicit dependency injection | String tokens + resolver, no reflection |
 | Debuggable bootstrap | Deterministic graph construction with clear errors |
 | Minimal framework overhead | Thin HTTP adapter on chi, no ORM, no config magic |
+
+### Compared to Other Go Frameworks
+
+| If you use... | modkit is different because... |
+|---------------|--------------------------------|
+| google/wire   | modkit adds module boundaries + visibility enforcement |
+| uber-go/fx    | No reflection, explicit Build functions |
+| samber/do     | Full module system with imports/exports |
+| No framework  | Structured module organization without boilerplate |
+
+See the [full comparison](docs/guides/comparison.md) for details.
 
 ## Quick Example
 
@@ -70,6 +83,15 @@ Requires Go 1.22+
 - **No Reflection** — Everything is explicit and type-safe
 - **Deterministic Bootstrap** — Predictable initialization order with clear error messages
 
+## Packages
+
+| Package | Description |
+|---------|-------------|
+| `modkit/module` | Module metadata types (`ModuleDef`, `ProviderDef`, `Token`) |
+| `modkit/kernel` | Graph builder, visibility enforcer, bootstrap |
+| `modkit/http` | HTTP adapter for chi router |
+| `modkit/logging` | Logging interface with slog adapter |
+
 ## Architecture
 
 ```mermaid
@@ -104,10 +126,24 @@ See [Architecture Guide](docs/architecture.md) for details.
 
 ## Documentation
 
+**Guides:**
 - [Getting Started](docs/guides/getting-started.md) — Your first modkit app
-- [Modules Guide](docs/guides/modules.md) — Module composition and visibility
-- [Testing Guide](docs/guides/testing.md) — Testing patterns
-- [Example App](examples/hello-mysql/) — Full CRUD API with MySQL
+- [Modules](docs/guides/modules.md) — Module composition and visibility
+- [Providers](docs/guides/providers.md) — Dependency injection and lifecycle
+- [Controllers](docs/guides/controllers.md) — HTTP handlers and routing
+- [Middleware](docs/guides/middleware.md) — Request/response middleware
+- [Error Handling](docs/guides/error-handling.md) — Error patterns and Problem Details
+- [Testing](docs/guides/testing.md) — Testing patterns
+- [Comparison](docs/guides/comparison.md) — vs Wire, Fx, and others
+
+**Reference:**
+- [API Reference](docs/reference/api.md) — Types and functions
+- [Architecture](docs/architecture.md) — How modkit works under the hood
+- [FAQ](docs/faq.md) — Common questions
+
+**Examples:**
+- [hello-simple](examples/hello-simple/) — Minimal example, no Docker
+- [hello-mysql](examples/hello-mysql/) — Full CRUD API with MySQL
 
 ## How It Compares to NestJS
 
