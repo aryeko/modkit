@@ -31,6 +31,10 @@ tools:
 # Install development tools and setup git hooks
 setup-hooks: tools
 	@echo "Setting up git hooks..."
+	@if ! command -v lefthook >/dev/null 2>&1; then \
+		echo "Warning: lefthook not found in PATH. Ensure \$$GOPATH/bin is in your PATH:"; \
+		echo "  export PATH=\"\$$(go env GOPATH)/bin:\$$PATH\""; \
+	fi
 	$(LEFTHOOK) install
 	@echo "Done: Git hooks installed"
 

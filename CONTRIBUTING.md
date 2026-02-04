@@ -10,7 +10,14 @@ go test ./...
 
 ### Setup Git Hooks
 
-After cloning the repository, run once to enable commit message validation:
+After cloning the repository, ensure `$GOPATH/bin` is in your PATH (required for git hooks):
+
+```bash
+# Add to your shell profile (.bashrc, .zshrc, etc.) if not already present
+export PATH="$(go env GOPATH)/bin:$PATH"
+```
+
+Then run once to enable commit message validation:
 
 ```bash
 make setup-hooks
@@ -28,6 +35,8 @@ Examples:
 - `docs: update installation guide`
 
 Valid types: `feat`, `fix`, `docs`, `test`, `chore`, `refactor`, `perf`, `ci`
+
+**Note**: Commit messages must be ≤50 characters for the header
 
 ## Guidelines
 
