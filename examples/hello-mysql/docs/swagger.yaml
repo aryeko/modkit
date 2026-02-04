@@ -1,12 +1,30 @@
 basePath: /
 definitions:
+  users.CreateUserInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    type: object
+  users.UpdateUserInput:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+    type: object
   users.User:
     properties:
+      created_at:
+        type: string
       email:
         type: string
       id:
         type: integer
       name:
+        type: string
+      updated_at:
         type: string
     type: object
 info:
@@ -30,7 +48,79 @@ paths:
       summary: Health check
       tags:
       - health
+  /users:
+    get:
+      description: Returns all users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/users.User'
+            type: array
+      summary: List users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user.
+      parameters:
+      - description: User payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/users.CreateUserInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/users.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create user
+      tags:
+      - users
   /users/{id}:
+    delete:
+      description: Deletes a user by id.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete user
+      tags:
+      - users
     get:
       description: Returns a user by id.
       parameters:
@@ -59,6 +149,44 @@ paths:
               type: string
             type: object
       summary: Get user
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Updates a user by id.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/users.UpdateUserInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/users.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update user
       tags:
       - users
 swagger: "2.0"

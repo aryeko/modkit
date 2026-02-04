@@ -2,6 +2,7 @@ package users
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/modules/database"
 	"github.com/aryeko/modkit/examples/hello-mysql/internal/sqlc"
@@ -74,7 +75,9 @@ func (m Module) Definition() module.ModuleDef {
 
 // User represents the API response model.
 type User struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

@@ -15,6 +15,22 @@ func (s stubUsersService) GetUser(ctx context.Context, id int64) (users.User, er
 	return s.user, nil
 }
 
+func (s stubUsersService) CreateUser(ctx context.Context, input users.CreateUserInput) (users.User, error) {
+	return users.User{}, nil
+}
+
+func (s stubUsersService) ListUsers(ctx context.Context) ([]users.User, error) {
+	return nil, nil
+}
+
+func (s stubUsersService) UpdateUser(ctx context.Context, id int64, input users.UpdateUserInput) (users.User, error) {
+	return users.User{}, nil
+}
+
+func (s stubUsersService) DeleteUser(ctx context.Context, id int64) error {
+	return nil
+}
+
 func TestAuditService_FormatsEntry(t *testing.T) {
 	svc := NewService(stubUsersService{user: users.User{ID: 3, Name: "Jo", Email: "jo@example.com"}})
 
