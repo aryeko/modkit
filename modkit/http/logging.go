@@ -1,7 +1,6 @@
 package http
 
 import (
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -21,10 +20,10 @@ func RequestLogger(logger logging.Logger) func(http.Handler) http.Handler {
 			duration := time.Since(start)
 
 			logger.Info("http request",
-				slog.String("method", r.Method),
-				slog.String("path", r.URL.Path),
-				slog.Int("status", ww.Status()),
-				slog.Duration("duration", duration),
+				"method", r.Method,
+				"path", r.URL.Path,
+				"status", ww.Status(),
+				"duration", duration,
 			)
 		})
 	}
