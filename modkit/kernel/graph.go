@@ -34,6 +34,9 @@ func BuildGraph(root module.Module) (*Graph, error) {
 
 	var visit func(m module.Module) error
 	visit = func(m module.Module) error {
+		if m == nil {
+			return &NilImportError{Module: "", Index: -1}
+		}
 		def := m.Definition()
 		name := def.Name
 		if name == "" {
@@ -46,8 +49,12 @@ func BuildGraph(root module.Module) (*Graph, error) {
 			id = val.Pointer()
 		}
 
-		if existing, ok := identities[name]; ok {
-			if id == 0 || existing != id {
+		if id == 0 {
+			if _, ok := identities[name]; ok {
+				return &DuplicateModuleNameError{Name: name}
+			}
+		} else if existing, ok := identities[name]; ok {
+			if existing != id {
 				return &DuplicateModuleNameError{Name: name}
 			}
 		}
@@ -68,13 +75,18 @@ func BuildGraph(root module.Module) (*Graph, error) {
 		}
 
 		state[name] = 1
-		if id != 0 {
+		if id == 0 {
+			identities[name] = 0
+		} else {
 			identities[name] = id
 		}
 		stack = append(stack, name)
 
 		imports := make([]string, 0, len(def.Imports))
-		for _, imp := range def.Imports {
+		for idx, imp := range def.Imports {
+			if imp == nil {
+				return &NilImportError{Module: name, Index: idx}
+			}
 			if err := visit(imp); err != nil {
 				return err
 			}

@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/aryeko/modkit/modkit/kernel"
 	"github.com/aryeko/modkit/modkit/module"
@@ -139,5 +140,62 @@ func TestContainerDetectsMutualCycle(t *testing.T) {
 	var cycleErr *kernel.ProviderCycleError
 	if !errors.As(err, &cycleErr) {
 		t.Fatalf("unexpected error type: %T", err)
+	}
+}
+
+func TestContainerDetectsConcurrentMutualCycle(t *testing.T) {
+	a := module.Token("a")
+	b := module.Token("b")
+	start := make(chan struct{})
+
+	modA := mod("A", nil,
+		[]module.ProviderDef{{
+			Token: a,
+			Build: func(r module.Resolver) (any, error) {
+				<-start
+				return r.Get(b)
+			},
+		}, {
+			Token: b,
+			Build: func(r module.Resolver) (any, error) {
+				<-start
+				return r.Get(a)
+			},
+		}},
+		nil,
+		nil,
+	)
+
+	app, err := kernel.Bootstrap(modA)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+
+	results := make(chan error, 2)
+	go func() {
+		_, err := app.Container.Get(a)
+		results <- err
+	}()
+	go func() {
+		_, err := app.Container.Get(b)
+		results <- err
+	}()
+
+	close(start)
+
+	deadline := time.After(2 * time.Second)
+	for i := 0; i < 2; i++ {
+		select {
+		case err := <-results:
+			if err == nil {
+				t.Fatalf("expected dependency cycle error")
+			}
+			var cycleErr *kernel.ProviderCycleError
+			if !errors.As(err, &cycleErr) {
+				t.Fatalf("unexpected error type: %T", err)
+			}
+		case <-deadline:
+			t.Fatalf("timeout waiting for cycle detection")
+		}
 	}
 }

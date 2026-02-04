@@ -16,6 +16,14 @@ func (m *testModule) Definition() module.ModuleDef {
 	return m.def
 }
 
+type valueModule struct {
+	def module.ModuleDef
+}
+
+func (m valueModule) Definition() module.ModuleDef {
+	return m.def
+}
+
 func mod(
 	name string,
 	imports []module.Module,
@@ -57,6 +65,26 @@ func TestBuildGraphRejectsEmptyModuleName(t *testing.T) {
 	var nameErr *kernel.InvalidModuleNameError
 	if !errors.As(err, &nameErr) {
 		t.Fatalf("unexpected error type: %T", err)
+	}
+}
+
+func TestBuildGraphRejectsNilImport(t *testing.T) {
+	root := mod("A", []module.Module{nil}, nil, nil, nil)
+
+	_, err := kernel.BuildGraph(root)
+	if err == nil {
+		t.Fatalf("expected error for nil import")
+	}
+
+	var importErr *kernel.NilImportError
+	if !errors.As(err, &importErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if importErr.Module != "A" {
+		t.Fatalf("unexpected module: %q", importErr.Module)
+	}
+	if importErr.Index != 0 {
+		t.Fatalf("unexpected index: %d", importErr.Index)
 	}
 }
 
@@ -102,6 +130,25 @@ func TestBuildGraphAllowsSharedImports(t *testing.T) {
 func TestBuildGraphRejectsDuplicateModuleNames(t *testing.T) {
 	modB1 := mod("B", nil, nil, nil, nil)
 	modB2 := mod("B", nil, nil, nil, nil)
+	modA := mod("A", []module.Module{modB1, modB2}, nil, nil, nil)
+
+	_, err := kernel.BuildGraph(modA)
+	if err == nil {
+		t.Fatalf("expected error for duplicate module names")
+	}
+
+	var dupErr *kernel.DuplicateModuleNameError
+	if !errors.As(err, &dupErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if dupErr.Name != "B" {
+		t.Fatalf("unexpected duplicate name: %q", dupErr.Name)
+	}
+}
+
+func TestBuildGraphRejectsDuplicateModuleNamesForValueModules(t *testing.T) {
+	modB1 := valueModule{def: module.ModuleDef{Name: "B"}}
+	modB2 := valueModule{def: module.ModuleDef{Name: "B"}}
 	modA := mod("A", []module.Module{modB1, modB2}, nil, nil, nil)
 
 	_, err := kernel.BuildGraph(modA)

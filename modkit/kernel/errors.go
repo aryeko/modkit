@@ -20,6 +20,15 @@ func (e *InvalidModuleNameError) Error() string {
 	return fmt.Sprintf("invalid module name: %q", e.Name)
 }
 
+type NilImportError struct {
+	Module string
+	Index  int
+}
+
+func (e *NilImportError) Error() string {
+	return fmt.Sprintf("nil import: module=%q index=%d", e.Module, e.Index)
+}
+
 type DuplicateModuleNameError struct {
 	Name string
 }
