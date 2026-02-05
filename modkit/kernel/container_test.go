@@ -269,11 +269,12 @@ func TestContainerGetMissingTokenError(t *testing.T) {
 		t.Fatalf("expected error for missing token")
 	}
 
-	// We expect either TokenNotVisibleError (token not in visibility map) or
-	// ProviderNotFoundError (token doesn't exist). Both are valid error paths.
-	// Just ensure we get an error and it's properly formed.
-	if err.Error() == "" {
-		t.Fatalf("expected non-empty error message")
+	var notVisible *kernel.TokenNotVisibleError
+	if !errors.As(err, &notVisible) {
+		t.Fatalf("expected TokenNotVisibleError, got %T", err)
+	}
+	if notVisible.Module != "A" || notVisible.Token != missingToken {
+		t.Fatalf("unexpected error fields: %+v", notVisible)
 	}
 }
 
