@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/go-modkit/modkit/examples/hello-mysql/docs"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpserver"
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/lifecycle"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/app"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
@@ -21,7 +27,7 @@ func main() {
 	cfg := config.Load()
 	jwtTTL := parseJWTTTL(cfg.JWTTTL)
 
-	handler, err := httpserver.BuildHandler(buildAppOptions(cfg, jwtTTL))
+	boot, handler, err := httpserver.BuildAppHandler(buildAppOptions(cfg, jwtTTL))
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
@@ -29,8 +35,48 @@ func main() {
 	logger := logging.New()
 	logStartup(logger, cfg.HTTPAddr)
 
-	if err := modkithttp.Serve(cfg.HTTPAddr, handler); err != nil {
-		log.Fatalf("server failed: %v", err)
+	server := &http.Server{
+		Addr:    cfg.HTTPAddr,
+		Handler: handler,
+	}
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(sigCh)
+		close(sigCh)
+	}()
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server failed: %v", err)
+		}
+	case <-sigCh:
+		ctx, cancel := context.WithTimeout(context.Background(), modkithttp.ShutdownTimeout)
+		defer cancel()
+
+		shutdownErr := server.Shutdown(ctx)
+		cleanupErr := lifecycle.RunCleanup(ctx, boot.CleanupHooks())
+
+		err := <-errCh
+		if err == http.ErrServerClosed {
+			err = nil
+		}
+		if shutdownErr != nil {
+			log.Fatalf("shutdown failed: %v", shutdownErr)
+		}
+		if cleanupErr != nil {
+			log.Fatalf("cleanup failed: %v", cleanupErr)
+		}
+		if err != nil {
+			log.Fatalf("server failed: %v", err)
+		}
 	}
 }
 
