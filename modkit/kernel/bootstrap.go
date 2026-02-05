@@ -100,6 +100,11 @@ func (a *App) Close() error {
 func (a *App) CloseContext(ctx context.Context) error {
 	a.closeOnce.Do(func() {
 		var errs []error
+		if ctx != nil && ctx.Err() != nil {
+			errs = append(errs, ctx.Err())
+			a.closeErr = errors.Join(errs...)
+			return
+		}
 		for _, closer := range a.container.closersLIFO() {
 			if err := closer.Close(); err != nil {
 				errs = append(errs, err)

@@ -1,6 +1,7 @@
 package kernel_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -105,5 +106,25 @@ func TestAppCloseAggregatesErrors(t *testing.T) {
 
 	if !errors.Is(err, errA) || !errors.Is(err, errB) {
 		t.Fatalf("expected aggregated errors, got %v", err)
+	}
+}
+
+func TestAppCloseContextCanceledWithNoClosers(t *testing.T) {
+	modA := mod("A", nil, nil, nil, nil)
+
+	app, err := kernel.Bootstrap(modA)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	err = app.CloseContext(ctx)
+	if err == nil {
+		t.Fatalf("expected close error")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context canceled error, got %v", err)
 	}
 }
