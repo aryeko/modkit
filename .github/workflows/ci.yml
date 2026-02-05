@@ -20,26 +20,24 @@ jobs:
     name: Quality (Lint & Vuln)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
-          go-version: "1.25.x"
-          # Disable setup-go's cache; we use a custom cache below with a more stable key
-          cache: false
+          cache-dependency-path: "**/*.sum"
 
-      - name: Cache Tools and Modules
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/bin
-            ~/go/pkg/mod
-            ~/.cache/golangci-lint
-          # Key based on tools/tools.go and go.sum (tool versions only)
-          # This cache is stable: only invalidates when tools change, not app dependencies
-          # Caches both binaries and modules to prevent re-downloading on every run
-          key: ${{ runner.os }}-tools-${{ hashFiles('tools/tools.go', 'go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-tools-
+      # - name: Cache Tools and Modules
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/go/bin
+      #       ~/go/pkg/mod
+      #       ~/.cache/golangci-lint
+      #     # Key based on tools/tools.go and go.sum (tool versions only)
+      #     # This cache is stable: only invalidates when tools change, not app dependencies
+      #     # Caches both binaries and modules to prevent re-downloading on every run
+      #     key: ${{ runner.os }}-tools-${{ hashFiles('tools/tools.go', 'go.sum') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-tools-
 
       - name: Install tools
         # Use make tools to install versions pinned in go.mod/tools.go
@@ -55,25 +53,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
-          go-version: "1.25.x"
-          # Disable setup-go's cache; we use a custom cache below
-          cache: false
-
-      - name: Cache Go Modules and Build Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/go/pkg/mod
-            ~/.cache/go-build
-          # Key based on all go.sum files (app + examples dependencies)
-          # This ensures tests use cached modules when dependencies haven't changed
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum', 'go.work.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
+          cache-dependency-path: "**/*.sum"
       - name: Test with coverage
         run: make test-coverage
       - name: Upload coverage to Codecov
