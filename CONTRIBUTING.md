@@ -156,3 +156,33 @@ New to modkit? Look for issues labeled [`good first issue`](https://github.com/a
 ## Questions?
 
 Open an issue or start a discussion. We're happy to help!
+
+## Releases
+
+Releases are automated using [go-semantic-release](https://github.com/go-semantic-release/semantic-release).
+
+### How It Works
+
+When changes are merged to `main`, the release workflow analyzes commit messages:
+
+| Commit Type | Release Action | Example |
+|-------------|----------------|---------|
+| `feat:` | Minor version bump (0.1.0 -> 0.2.0) | New API method |
+| `fix:` | Patch version bump (0.1.0 -> 0.1.1) | Bug fix |
+| `feat!:` or `BREAKING CHANGE` | v0.x: minor bump; v1+: major bump | Breaking API change |
+| `docs:`, `chore:`, `refactor:`, `test:`, `ci:` | No release | Documentation, tooling |
+
+### Versioning Strategy
+
+modkit follows [Semantic Versioning](https://semver.org/):
+
+- **v0.x.x** (current): API is evolving. Breaking changes (`feat!:`) bump the minor version (0.1.0 → 0.2.0) due to `allow-initial-development-versions` setting
+- **v1.0.0** (future): Stable API with backward compatibility guarantees. Breaking changes will bump major version (1.0.0 → 2.0.0)
+- **v2+**: Major versions for breaking changes (requires `/v2` import path)
+
+### Using a Specific Version
+
+```bash
+go get github.com/aryeko/modkit@v0.1.0
+go get github.com/aryeko/modkit@latest
+```
