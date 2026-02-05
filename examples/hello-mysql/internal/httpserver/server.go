@@ -28,29 +28,29 @@ func BuildAppHandler(opts app.Options) (*kernel.App, http.Handler, error) {
 
 	corsAny, err := boot.Get(app.CorsMiddlewareToken)
 	if err != nil {
-		return nil, nil, err
+		return boot, nil, err
 	}
 	cors, ok := corsAny.(func(http.Handler) http.Handler)
 	if !ok {
-		return nil, nil, fmt.Errorf("cors middleware: expected func(http.Handler) http.Handler, got %T", corsAny)
+		return boot, nil, fmt.Errorf("cors middleware: expected func(http.Handler) http.Handler, got %T", corsAny)
 	}
 
 	rateLimitAny, err := boot.Get(app.RateLimitMiddlewareToken)
 	if err != nil {
-		return nil, nil, err
+		return boot, nil, err
 	}
 	rateLimit, ok := rateLimitAny.(func(http.Handler) http.Handler)
 	if !ok {
-		return nil, nil, fmt.Errorf("rate limit middleware: expected func(http.Handler) http.Handler, got %T", rateLimitAny)
+		return boot, nil, fmt.Errorf("rate limit middleware: expected func(http.Handler) http.Handler, got %T", rateLimitAny)
 	}
 
 	timingAny, err := boot.Get(app.TimingMiddlewareToken)
 	if err != nil {
-		return nil, nil, err
+		return boot, nil, err
 	}
 	timing, ok := timingAny.(func(http.Handler) http.Handler)
 	if !ok {
-		return nil, nil, fmt.Errorf("timing middleware: expected func(http.Handler) http.Handler, got %T", timingAny)
+		return boot, nil, fmt.Errorf("timing middleware: expected func(http.Handler) http.Handler, got %T", timingAny)
 	}
 
 	var registerErr error

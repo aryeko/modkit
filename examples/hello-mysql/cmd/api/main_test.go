@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	mwconfig "github.com/go-modkit/modkit/examples/hello-mysql/internal/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/lifecycle"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
 )
@@ -123,11 +124,30 @@ func TestBuildAuthConfig_MapsFields(t *testing.T) {
 
 func TestBuildAppOptions_MapsFields(t *testing.T) {
 	cfg := config.Config{HTTPAddr: ":1234", MySQLDSN: "dsn", JWTSecret: "s", JWTIssuer: "i", AuthUsername: "u", AuthPassword: "p"}
-	got := buildAppOptions(cfg, 10*time.Minute)
+	mwCfg := mwconfig.Config{
+		CORSAllowedOrigins: []string{"http://example.com"},
+		CORSAllowedMethods: []string{"GET", "POST"},
+		CORSAllowedHeaders: []string{"Content-Type"},
+		RateLimitPerSecond: 7.5,
+		RateLimitBurst:     15,
+	}
+	got := buildAppOptions(cfg, mwCfg, 10*time.Minute)
 	if got.HTTPAddr != ":1234" || got.MySQLDSN != "dsn" {
 		t.Fatalf("unexpected options: %+v", got)
 	}
 	if got.Auth.Secret != "s" || got.Auth.Issuer != "i" || got.Auth.Username != "u" || got.Auth.Password != "p" || got.Auth.TTL != 10*time.Minute {
 		t.Fatalf("unexpected auth: %+v", got.Auth)
+	}
+	if len(got.CORSAllowedOrigins) != 1 || got.CORSAllowedOrigins[0] != "http://example.com" {
+		t.Fatalf("unexpected cors origins: %+v", got.CORSAllowedOrigins)
+	}
+	if len(got.CORSAllowedMethods) != 2 || got.CORSAllowedMethods[0] != "GET" || got.CORSAllowedMethods[1] != "POST" {
+		t.Fatalf("unexpected cors methods: %+v", got.CORSAllowedMethods)
+	}
+	if len(got.CORSAllowedHeaders) != 1 || got.CORSAllowedHeaders[0] != "Content-Type" {
+		t.Fatalf("unexpected cors headers: %+v", got.CORSAllowedHeaders)
+	}
+	if got.RateLimitPerSecond != 7.5 || got.RateLimitBurst != 15 {
+		t.Fatalf("unexpected rate limit: %v/%d", got.RateLimitPerSecond, got.RateLimitBurst)
 	}
 }
