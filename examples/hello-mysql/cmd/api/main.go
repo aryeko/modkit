@@ -61,8 +61,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), modkithttp.ShutdownTimeout)
 		defer cancel()
 
-		shutdownErr := server.Shutdown(ctx)
-		cleanupErr := lifecycle.RunCleanup(ctx, boot.CleanupHooks())
+		shutdownErr := lifecycle.ShutdownServer(ctx, server, boot.CleanupHooks())
 
 		err := <-errCh
 		if err == http.ErrServerClosed {
@@ -70,9 +69,6 @@ func main() {
 		}
 		if shutdownErr != nil {
 			log.Fatalf("shutdown failed: %v", shutdownErr)
-		}
-		if cleanupErr != nil {
-			log.Fatalf("cleanup failed: %v", cleanupErr)
 		}
 		if err != nil {
 			log.Fatalf("server failed: %v", err)
