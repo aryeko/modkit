@@ -150,14 +150,31 @@ func main() {
     if err := mkhttp.Serve(":8080", router); err != nil {
         log.Printf("server error: %v", err)
     }
-    if err := app.CloseContext(context.Background()); err != nil {
-        log.Printf("shutdown error: %v", err)
-    }
+if err := app.CloseContext(context.Background()); err != nil {
+    log.Printf("shutdown error: %v", err)
+}
 }
 ```
 
-`CloseContext` checks `ctx.Err()` before starting and before each provider close. If the context
-is canceled, it returns `ctx.Err()` and leaves the app eligible for a later `Close()` retry.
+`Close()` closes providers in reverse build order.
+Close is idempotent and safe to call: once it completes successfully (even with aggregated errors),
+subsequent calls return `nil` and do not re-close providers.
+
+For context-aware shutdown, use `CloseContext(ctx)`:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+defer cancel()
+
+if err := app.CloseContext(ctx); err != nil {
+    // Returns ctx.Err() if canceled or timed out
+    log.Printf("shutdown error: %v", err)
+}
+```
+
+`CloseContext` checks `ctx.Err()` before closing and before each closer. If the context
+is canceled or times out, it returns `ctx.Err()` and leaves the app eligible for a
+later `Close()` retry. While a close is in progress, concurrent close calls are no-ops.
 Use `App.Close()` if you don't need context-aware cancellation behavior.
 
 ### Alternative 1: Cleanup in main()
