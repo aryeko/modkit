@@ -94,6 +94,7 @@ func TestEnvOrDefault(t *testing.T) {
 		name     string
 		key      string
 		setValue string
+		forceSet bool
 		default_ string
 		want     string
 	}{
@@ -108,6 +109,7 @@ func TestEnvOrDefault(t *testing.T) {
 			name:     "env var empty",
 			key:      "TEST_VAR_EMPTY",
 			setValue: "",
+			forceSet: true,
 			default_: "default-value",
 			want:     "default-value",
 		},
@@ -129,7 +131,7 @@ func TestEnvOrDefault(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setValue != "" {
+			if tt.setValue != "" || tt.forceSet {
 				os.Setenv(tt.key, tt.setValue)
 			} else {
 				os.Unsetenv(tt.key)
@@ -149,6 +151,7 @@ func TestSplitEnv(t *testing.T) {
 		name     string
 		key      string
 		setValue string
+		forceSet bool
 		default_ string
 		want     []string
 	}{
@@ -198,7 +201,7 @@ func TestSplitEnv(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setValue != "" {
+			if tt.setValue != "" || tt.forceSet {
 				os.Setenv(tt.key, tt.setValue)
 			} else {
 				os.Unsetenv(tt.key)
@@ -218,6 +221,7 @@ func TestEnvFloat(t *testing.T) {
 		name     string
 		key      string
 		setValue string
+		forceSet bool
 		default_ float64
 		want     float64
 	}{
@@ -246,6 +250,7 @@ func TestEnvFloat(t *testing.T) {
 			name:     "empty env var",
 			key:      "TEST_FLOAT_EMPTY",
 			setValue: "",
+			forceSet: true,
 			default_: 1.0,
 			want:     1.0,
 		},
@@ -274,7 +279,7 @@ func TestEnvFloat(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setValue != "" {
+			if tt.setValue != "" || tt.forceSet {
 				os.Setenv(tt.key, tt.setValue)
 			} else {
 				os.Unsetenv(tt.key)
@@ -294,6 +299,7 @@ func TestEnvInt(t *testing.T) {
 		name     string
 		key      string
 		setValue string
+		forceSet bool
 		default_ int
 		want     int
 	}{
@@ -336,6 +342,7 @@ func TestEnvInt(t *testing.T) {
 			name:     "empty env var",
 			key:      "TEST_INT_EMPTY",
 			setValue: "",
+			forceSet: true,
 			default_: 1,
 			want:     1,
 		},
@@ -357,7 +364,7 @@ func TestEnvInt(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.setValue != "" {
+			if tt.setValue != "" || tt.forceSet {
 				os.Setenv(tt.key, tt.setValue)
 			} else {
 				os.Unsetenv(tt.key)
