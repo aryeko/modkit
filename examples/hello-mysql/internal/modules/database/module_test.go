@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestModuleDefinition_ProviderCleanupHook(t *testing.T) {
+func TestModuleDefinition_ProviderCleanupHook_CanceledContext(t *testing.T) {
 	def := Module{}.Definition()
 	if len(def.Providers) == 0 {
 		t.Fatal("expected at least one provider")
