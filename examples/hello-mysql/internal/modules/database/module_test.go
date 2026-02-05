@@ -26,3 +26,20 @@ func TestModuleDefinition_ProviderCleanupHook_CanceledContext(t *testing.T) {
 		t.Fatalf("expected context.Canceled, got %v", err)
 	}
 }
+
+func TestDatabaseModule_Definition_ProvidesDB(t *testing.T) {
+	mod := NewModule(Options{DSN: "dsn"})
+	def := mod.(*Module).Definition()
+	if def.Name != "database" {
+		t.Fatalf("expected name database, got %q", def.Name)
+	}
+	if len(def.Providers) != 1 {
+		t.Fatalf("expected 1 provider, got %d", len(def.Providers))
+	}
+	if def.Providers[0].Token != TokenDB {
+		t.Fatalf("expected TokenDB, got %q", def.Providers[0].Token)
+	}
+	if def.Providers[0].Cleanup == nil {
+		t.Fatal("expected cleanup hook")
+	}
+}
