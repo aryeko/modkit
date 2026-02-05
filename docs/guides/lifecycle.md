@@ -284,6 +284,49 @@ func main() {
 }
 ```
 
+### Pattern 4: signal.NotifyContext Shutdown
+
+Use `signal.NotifyContext` for standard Go signal handling, then shut down the server and close providers:
+
+```go
+func main() {
+    ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+    defer stop()
+
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    router := mkhttp.NewRouter()
+    mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
+
+    srv := &http.Server{
+        Addr:    ":8080",
+        Handler: router,
+    }
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+            log.Printf("server error: %v", err)
+        }
+    }()
+
+    <-ctx.Done()
+
+    shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    if err := srv.Shutdown(shutdownCtx); err != nil {
+        log.Printf("server shutdown error: %v", err)
+    }
+
+    if err := app.Close(); err != nil {
+        log.Printf("app close error: %v", err)
+    }
+}
+```
+
 ## Request-Scoped Values
 
 Providers are singletons and cannot be request-scoped. For request-specific data, use `context.Context`:
