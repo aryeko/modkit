@@ -11,6 +11,8 @@ import (
 // Router provides a minimal method-based handler registration API.
 type Router interface {
 	Handle(method string, pattern string, handler http.Handler)
+	Group(pattern string, fn func(Router))
+	Use(middlewares ...func(http.Handler) http.Handler)
 }
 
 // RouteRegistrar defines a controller that can register its HTTP routes.
@@ -24,6 +26,16 @@ type routerAdapter struct {
 
 func (r routerAdapter) Handle(method string, pattern string, handler http.Handler) {
 	r.Method(method, pattern, handler)
+}
+
+func (r routerAdapter) Group(pattern string, fn func(Router)) {
+	r.Route(pattern, func(sub chi.Router) {
+		fn(routerAdapter{Router: sub})
+	})
+}
+
+func (r routerAdapter) Use(middlewares ...func(http.Handler) http.Handler) {
+	r.Router.Use(middlewares...)
 }
 
 // AsRouter adapts a chi router to the minimal Router interface.
