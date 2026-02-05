@@ -35,15 +35,13 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 	}
 
 	handler, err := httpserver.BuildHandler(app.Options{
-		HTTPAddr: ":8080",
-		MySQLDSN: dsn,
-		Auth: auth.Config{
-			Secret:   "dev-secret-change-me",
-			Issuer:   "hello-mysql",
-			TTL:      time.Hour,
-			Username: "demo",
-			Password: "demo",
-		},
+		HTTPAddr:           ":8080",
+		MySQLDSN:           dsn,
+		Auth:               auth.Config{Secret: "dev-secret-change-me", Issuer: "hello-mysql", TTL: time.Hour, Username: "demo", Password: "demo"},
+		CORSAllowedOrigins: []string{"http://localhost:3000"},
+		CORSAllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		RateLimitPerSecond: 5,
+		RateLimitBurst:     10,
 	})
 	if err != nil {
 		t.Fatalf("build handler failed: %v", err)
@@ -52,7 +50,7 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/health")
+	resp, err := http.Get(srv.URL + "/api/v1/health")
 	if err != nil {
 		t.Fatalf("health request failed: %v", err)
 	}
@@ -61,7 +59,7 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 	}
 
 	loginBody := []byte(`{"username":"demo","password":"demo"}`)
-	loginReq, err := http.NewRequest(http.MethodPost, srv.URL+"/auth/login", bytes.NewReader(loginBody))
+	loginReq, err := http.NewRequest(http.MethodPost, srv.URL+"/api/v1/auth/login", bytes.NewReader(loginBody))
 	if err != nil {
 		t.Fatalf("login request failed: %v", err)
 	}
@@ -84,7 +82,7 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 		t.Fatalf("expected login token")
 	}
 
-	userReq, err := http.NewRequest(http.MethodGet, srv.URL+"/users/1", nil)
+	userReq, err := http.NewRequest(http.MethodGet, srv.URL+"/api/v1/users/1", nil)
 	if err != nil {
 		t.Fatalf("users request failed: %v", err)
 	}

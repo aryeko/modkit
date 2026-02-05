@@ -10,11 +10,12 @@ import (
 	"time"
 
 	_ "github.com/go-modkit/modkit/examples/hello-mysql/docs"
+	mwconfig "github.com/go-modkit/modkit/examples/hello-mysql/internal/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpserver"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/lifecycle"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/app"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
-	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
+	platformconfig "github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/logging"
 	modkithttp "github.com/go-modkit/modkit/modkit/http"
 )
@@ -24,10 +25,11 @@ import (
 // @description Example modkit service with MySQL.
 // @BasePath /
 func main() {
-	cfg := config.Load()
+	cfg := platformconfig.Load()
+	mwCfg := mwconfig.Load()
 	jwtTTL := parseJWTTTL(cfg.JWTTTL)
 
-	boot, handler, err := httpserver.BuildAppHandler(buildAppOptions(cfg, jwtTTL))
+	boot, handler, err := httpserver.BuildAppHandler(buildAppOptions(cfg, mwCfg, jwtTTL))
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
@@ -58,15 +60,19 @@ func main() {
 	}
 }
 
-func buildAppOptions(cfg config.Config, jwtTTL time.Duration) app.Options {
+func buildAppOptions(cfg platformconfig.Config, mwCfg mwconfig.Config, jwtTTL time.Duration) app.Options {
 	return app.Options{
-		HTTPAddr: cfg.HTTPAddr,
-		MySQLDSN: cfg.MySQLDSN,
-		Auth:     buildAuthConfig(cfg, jwtTTL),
+		HTTPAddr:           cfg.HTTPAddr,
+		MySQLDSN:           cfg.MySQLDSN,
+		Auth:               buildAuthConfig(cfg, jwtTTL),
+		CORSAllowedOrigins: mwCfg.CORSAllowedOrigins,
+		CORSAllowedMethods: mwCfg.CORSAllowedMethods,
+		RateLimitPerSecond: mwCfg.RateLimitPerSecond,
+		RateLimitBurst:     mwCfg.RateLimitBurst,
 	}
 }
 
-func buildAuthConfig(cfg config.Config, jwtTTL time.Duration) auth.Config {
+func buildAuthConfig(cfg platformconfig.Config, jwtTTL time.Duration) auth.Config {
 	return auth.Config{
 		Secret:   cfg.JWTSecret,
 		Issuer:   cfg.JWTIssuer,

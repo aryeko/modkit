@@ -11,9 +11,13 @@ import (
 const HealthControllerID = "HealthController"
 
 type Options struct {
-	HTTPAddr string
-	MySQLDSN string
-	Auth     auth.Config
+	HTTPAddr           string
+	MySQLDSN           string
+	Auth               auth.Config
+	CORSAllowedOrigins []string
+	CORSAllowedMethods []string
+	RateLimitPerSecond float64
+	RateLimitBurst     int
 }
 
 type Module struct {

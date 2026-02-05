@@ -34,7 +34,7 @@ func TestBuildHandler_LogsRequest(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
 	h.ServeHTTP(rec, req)
 	if rec.Code != http.StatusOK {
 		_ = w.Close()
@@ -100,5 +100,9 @@ func testAppOptions() app.Options {
 			Username: "demo",
 			Password: "demo",
 		},
+		CORSAllowedOrigins: []string{"http://localhost:3000"},
+		CORSAllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		RateLimitPerSecond: 5,
+		RateLimitBurst:     10,
 	}
 }
