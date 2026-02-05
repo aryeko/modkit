@@ -85,7 +85,7 @@ Request validation returns RFC 7807 Problem Details with `invalidParams` for fie
 Create with missing fields:
 
 ```bash
-curl -X POST http://localhost:8080/users \
+curl -X POST http://localhost:8080/api/v1/users \
   -H 'Content-Type: application/json' \
   -d '{"name":"","email":""}'
 ```
@@ -98,7 +98,7 @@ Example response:
   "title": "Bad Request",
   "status": 400,
   "detail": "validation failed",
-  "instance": "/users",
+  "instance": "/api/v1/users",
   "invalidParams": [
     { "name": "name", "reason": "is required" },
     { "name": "email", "reason": "is required" }
@@ -109,7 +109,7 @@ Example response:
 Query parameter validation (pagination):
 
 ```bash
-curl "http://localhost:8080/users?page=-1&limit=0"
+curl "http://localhost:8080/api/v1/users?page=-1&limit=0"
 ```
 
 Example response:
@@ -120,7 +120,7 @@ Example response:
   "title": "Bad Request",
   "status": 400,
   "detail": "validation failed",
-  "instance": "/users",
+  "instance": "/api/v1/users",
   "invalidParams": [
     { "name": "page", "reason": "must be >= 1" },
     { "name": "limit", "reason": "must be >= 1" }
