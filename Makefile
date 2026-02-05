@@ -10,8 +10,8 @@ GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
 LEFTHOOK ?= $(GOPATH)/bin/lefthook
 COMMITLINT ?= $(GOPATH)/bin/commitlint
 
-# Find all directories with go.mod, excluding hidden dirs (like .worktrees) and vendor
-MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
+# Find all directories with go.mod, excluding hidden dirs (like .worktrees), vendor, and tools
+MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -not -path "*/tools/*" -exec dirname {} \;)
 
 fmt: tools
 	gofmt -w .
