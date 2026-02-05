@@ -55,3 +55,26 @@ func TestBuildHandler_LogsRequest(t *testing.T) {
 		t.Fatalf("expected log output, got %s", string(output))
 	}
 }
+
+func TestBuildAppHandler_ReturnsAppAndHandler(t *testing.T) {
+	boot, handler, err := BuildAppHandler(app.Options{
+		HTTPAddr: ":8080",
+		MySQLDSN: "root:password@tcp(localhost:3306)/app?parseTime=true&multiStatements=true",
+		Auth: auth.Config{
+			Secret:   "dev-secret-change-me",
+			Issuer:   "hello-mysql",
+			TTL:      time.Hour,
+			Username: "demo",
+			Password: "demo",
+		},
+	})
+	if err != nil {
+		t.Fatalf("build app handler: %v", err)
+	}
+	if boot == nil {
+		t.Fatal("expected app, got nil")
+	}
+	if handler == nil {
+		t.Fatal("expected handler, got nil")
+	}
+}
