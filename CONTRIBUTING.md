@@ -169,15 +169,15 @@ When changes are merged to `main`, the release workflow analyzes commit messages
 |-------------|----------------|---------|
 | `feat:` | Minor version bump (0.1.0 -> 0.2.0) | New API method |
 | `fix:` | Patch version bump (0.1.0 -> 0.1.1) | Bug fix |
-| `feat!:` or `BREAKING CHANGE` | Major version bump | Breaking API change |
+| `feat!:` or `BREAKING CHANGE` | v0.x: minor bump; v1+: major bump | Breaking API change |
 | `docs:`, `chore:`, `refactor:`, `test:`, `ci:` | No release | Documentation, tooling |
 
 ### Versioning Strategy
 
 modkit follows [Semantic Versioning](https://semver.org/):
 
-- **v0.x.x** (current): API is evolving, breaking changes may occur in minor versions
-- **v1.0.0** (future): Stable API with backward compatibility guarantees
+- **v0.x.x** (current): API is evolving. Breaking changes (`feat!:`) bump the minor version (0.1.0 → 0.2.0) due to `allow-initial-development-versions` setting
+- **v1.0.0** (future): Stable API with backward compatibility guarantees. Breaking changes will bump major version (1.0.0 → 2.0.0)
 - **v2+**: Major versions for breaking changes (requires `/v2` import path)
 
 ### Using a Specific Version
