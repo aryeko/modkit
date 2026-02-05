@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/lifecycle"
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
 )
 
 type stubServer struct {
@@ -88,5 +89,45 @@ func TestRunServer_ShutdownReturnsError(t *testing.T) {
 	err := runServer(50*time.Millisecond, server, sigCh, errCh, nil)
 	if err == nil || err.Error() != "shutdown failed" {
 		t.Fatalf("expected shutdown error, got %v", err)
+	}
+}
+
+func TestParseJWTTTL_InvalidFallsBack(t *testing.T) {
+	got := parseJWTTTL("nope")
+	if got != time.Hour {
+		t.Fatalf("expected 1h fallback, got %v", got)
+	}
+}
+
+func TestParseJWTTTL_NonPositiveFallsBack(t *testing.T) {
+	got := parseJWTTTL("0s")
+	if got != time.Hour {
+		t.Fatalf("expected 1h fallback, got %v", got)
+	}
+}
+
+func TestParseJWTTTL_Valid(t *testing.T) {
+	got := parseJWTTTL("2h")
+	if got != 2*time.Hour {
+		t.Fatalf("expected 2h, got %v", got)
+	}
+}
+
+func TestBuildAuthConfig_MapsFields(t *testing.T) {
+	cfg := config.Config{JWTSecret: "s", JWTIssuer: "i", AuthUsername: "u", AuthPassword: "p"}
+	got := buildAuthConfig(cfg, 5*time.Minute)
+	if got.Secret != "s" || got.Issuer != "i" || got.Username != "u" || got.Password != "p" || got.TTL != 5*time.Minute {
+		t.Fatalf("unexpected auth config: %+v", got)
+	}
+}
+
+func TestBuildAppOptions_MapsFields(t *testing.T) {
+	cfg := config.Config{HTTPAddr: ":1234", MySQLDSN: "dsn", JWTSecret: "s", JWTIssuer: "i", AuthUsername: "u", AuthPassword: "p"}
+	got := buildAppOptions(cfg, 10*time.Minute)
+	if got.HTTPAddr != ":1234" || got.MySQLDSN != "dsn" {
+		t.Fatalf("unexpected options: %+v", got)
+	}
+	if got.Auth.Secret != "s" || got.Auth.Issuer != "i" || got.Auth.Username != "u" || got.Auth.Password != "p" || got.Auth.TTL != 10*time.Minute {
+		t.Fatalf("unexpected auth: %+v", got.Auth)
 	}
 }
