@@ -10,11 +10,19 @@ func TestModuleDefinition_ProviderCleanupHook(t *testing.T) {
 	if len(def.Providers) == 0 {
 		t.Fatal("expected at least one provider")
 	}
-	cleanup := def.Providers[0].Cleanup
+	var cleanup func(ctx context.Context) error
+	for _, provider := range def.Providers {
+		if provider.Token == TokenDB {
+			cleanup = provider.Cleanup
+			break
+		}
+	}
 	if cleanup == nil {
 		t.Fatal("expected provider cleanup hook")
 	}
-	if err := cleanup(context.Background()); err != nil {
-		t.Fatalf("expected nil error, got %v", err)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := cleanup(ctx); err != context.Canceled {
+		t.Fatalf("expected context.Canceled, got %v", err)
 	}
 }
