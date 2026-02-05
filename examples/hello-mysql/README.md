@@ -4,14 +4,14 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 
 ## What This Example Includes
 - Modules: `AppModule`, `DatabaseModule`, `UsersModule`, `AuditModule` (consumes `UsersService` export).
-- Endpoints:
-  - `GET /health` → `{ "status": "ok" }`
-  - `POST /auth/login` → demo JWT token
-  - `POST /users` → create user
-  - `GET /users` → list users
-  - `GET /users/{id}` → user payload
-  - `PUT /users/{id}` → update user
-  - `DELETE /users/{id}` → delete user
+- Endpoints (under `/api/v1`):
+  - `GET /api/v1/health` → `{ "status": "ok" }`
+  - `POST /api/v1/auth/login` → demo JWT token
+  - `POST /api/v1/users` → create user
+  - `GET /api/v1/users` → list users
+  - `GET /api/v1/users/{id}` → user payload
+  - `PUT /api/v1/users/{id}` → update user
+  - `DELETE /api/v1/users/{id}` → delete user
 - Swagger UI at `GET /docs/index.html` (also available at `/swagger/index.html`)
 - MySQL via docker-compose for local runs.
 - Testcontainers for integration smoke tests.
@@ -20,14 +20,14 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 - Errors use RFC 7807 Problem Details (`application/problem+json`).
 
 ## Auth
-- Demo login endpoint: `POST /auth/login` returns a JWT.
+- Demo login endpoint: `POST /api/v1/auth/login` returns a JWT.
 - Protected routes (require `Authorization: Bearer <token>`):
-  - `POST /users`
-  - `GET /users/{id}`
-  - `PUT /users/{id}`
-  - `DELETE /users/{id}`
+  - `POST /api/v1/users`
+  - `GET /api/v1/users/{id}`
+  - `PUT /api/v1/users/{id}`
+  - `DELETE /api/v1/users/{id}`
 - Public route:
-  - `GET /users`
+  - `GET /api/v1/users`
 
 ## Run (Docker Compose + Local Migrate)
 
@@ -40,28 +40,27 @@ This starts MySQL in Docker, runs migrations locally, seeds data locally, and st
 Then hit:
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8080/api/v1/health
 
 # Login to get a token (demo credentials). Requires `jq` for parsing.
-TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"demo","password":"demo"}' | jq -r '.token')
 
 # Public route
-curl http://localhost:8080/users
+curl http://localhost:8080/api/v1/users
 
 # Protected routes (require Authorization header)
-curl -X POST http://localhost:8080/users \
+curl -X POST http://localhost:8080/api/v1/users \
   -H 'Authorization: Bearer '"$TOKEN"'' \
   -H 'Content-Type: application/json' \
   -d '{"name":"Ada","email":"ada@example.com"}'
-curl -H 'Authorization: Bearer '"$TOKEN"'' http://localhost:8080/users/1
-curl -X PUT http://localhost:8080/users/1 \
+curl -H 'Authorization: Bearer '"$TOKEN"'' http://localhost:8080/api/v1/users/1
+curl -X PUT http://localhost:8080/api/v1/users/1 \
   -H 'Authorization: Bearer '"$TOKEN"'' \
   -H 'Content-Type: application/json' \
   -d '{"name":"Ada Lovelace","email":"ada@example.com"}'
-curl -X DELETE http://localhost:8080/users/1 -H 'Authorization: Bearer '"$TOKEN"''
-
+curl -X DELETE http://localhost:8080/api/v1/users/1 -H 'Authorization: Bearer '"$TOKEN"''
 open http://localhost:8080/docs/index.html
 ```
 
@@ -143,6 +142,24 @@ The users service includes a context cancellation example via `Service.LongOpera
 
 ```bash
 make test
+```
+
+## Middleware Patterns
+
+API routes are grouped under `/api/v1` with scoped middleware. `/docs` and `/swagger` stay outside the group.
+
+Applied middleware order for `/api/v1`:
+- CORS (explicit allowed origins and methods)
+- Rate limiting (`golang.org/x/time/rate`)
+- Timing/metrics logging
+
+Example configuration:
+
+```bash
+export CORS_ALLOWED_ORIGINS="http://localhost:3000"
+export CORS_ALLOWED_METHODS="GET,POST,PUT,DELETE"
+export RATE_LIMIT_PER_SECOND="5"
+export RATE_LIMIT_BURST="10"
 ```
 
 ## Compose Services
