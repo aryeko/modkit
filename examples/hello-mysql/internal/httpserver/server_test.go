@@ -124,6 +124,7 @@ func testAppOptions() app.Options {
 		},
 		CORSAllowedOrigins: []string{"http://localhost:3000"},
 		CORSAllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		CORSAllowedHeaders: []string{"Content-Type", "Authorization"},
 		RateLimitPerSecond: 5,
 		RateLimitBurst:     10,
 	}

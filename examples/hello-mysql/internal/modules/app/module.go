@@ -23,6 +23,7 @@ type Options struct {
 	Auth               auth.Config
 	CORSAllowedOrigins []string
 	CORSAllowedMethods []string
+	CORSAllowedHeaders []string
 	RateLimitPerSecond float64
 	RateLimitBurst     int
 }
@@ -53,7 +54,7 @@ func (m *Module) Definition() module.ModuleDef {
 					return middleware.NewCORS(middleware.CORSConfig{
 						AllowedOrigins: m.opts.CORSAllowedOrigins,
 						AllowedMethods: m.opts.CORSAllowedMethods,
-						AllowedHeaders: nil,
+						AllowedHeaders: m.opts.CORSAllowedHeaders,
 					}), nil
 				},
 			},

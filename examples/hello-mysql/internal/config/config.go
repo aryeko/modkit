@@ -11,6 +11,7 @@ type Config struct {
 	MySQLDSN           string
 	CORSAllowedOrigins []string
 	CORSAllowedMethods []string
+	CORSAllowedHeaders []string
 	RateLimitPerSecond float64
 	RateLimitBurst     int
 }
@@ -21,6 +22,7 @@ func Load() Config {
 		MySQLDSN:           envOrDefault("MYSQL_DSN", "root:password@tcp(localhost:3306)/app?parseTime=true&multiStatements=true"),
 		CORSAllowedOrigins: splitEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000"),
 		CORSAllowedMethods: splitEnv("CORS_ALLOWED_METHODS", "GET,POST,PUT,DELETE"),
+		CORSAllowedHeaders: splitEnv("CORS_ALLOWED_HEADERS", "Content-Type,Authorization"),
 		RateLimitPerSecond: envFloat("RATE_LIMIT_PER_SECOND", 5),
 		RateLimitBurst:     envInt("RATE_LIMIT_BURST", 10),
 	}

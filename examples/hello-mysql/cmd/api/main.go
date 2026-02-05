@@ -23,7 +23,7 @@ import (
 // @title hello-mysql API
 // @version 0.1
 // @description Example modkit service with MySQL.
-// @BasePath /
+// @BasePath /api/v1
 func main() {
 	cfg := platformconfig.Load()
 	mwCfg := mwconfig.Load()
@@ -67,6 +67,7 @@ func buildAppOptions(cfg platformconfig.Config, mwCfg mwconfig.Config, jwtTTL ti
 		Auth:               buildAuthConfig(cfg, jwtTTL),
 		CORSAllowedOrigins: mwCfg.CORSAllowedOrigins,
 		CORSAllowedMethods: mwCfg.CORSAllowedMethods,
+		CORSAllowedHeaders: mwCfg.CORSAllowedHeaders,
 		RateLimitPerSecond: mwCfg.RateLimitPerSecond,
 		RateLimitBurst:     mwCfg.RateLimitBurst,
 	}

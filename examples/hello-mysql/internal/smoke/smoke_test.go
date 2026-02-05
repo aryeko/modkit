@@ -40,6 +40,7 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 		Auth:               auth.Config{Secret: "dev-secret-change-me", Issuer: "hello-mysql", TTL: time.Hour, Username: "demo", Password: "demo"},
 		CORSAllowedOrigins: []string{"http://localhost:3000"},
 		CORSAllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		CORSAllowedHeaders: []string{"Content-Type", "Authorization"},
 		RateLimitPerSecond: 5,
 		RateLimitBurst:     10,
 	})

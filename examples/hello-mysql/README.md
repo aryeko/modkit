@@ -158,6 +158,7 @@ Example configuration:
 ```bash
 export CORS_ALLOWED_ORIGINS="http://localhost:3000"
 export CORS_ALLOWED_METHODS="GET,POST,PUT,DELETE"
+export CORS_ALLOWED_HEADERS="Content-Type,Authorization"
 export RATE_LIMIT_PER_SECOND="5"
 export RATE_LIMIT_BURST="10"
 ```

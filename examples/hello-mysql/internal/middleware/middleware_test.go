@@ -32,7 +32,7 @@ func TestCORS_AddsHeaders(t *testing.T) {
 	cors := NewCORS(CORSConfig{
 		AllowedOrigins: []string{"http://localhost:3000"},
 		AllowedMethods: []string{"GET", "POST"},
-		AllowedHeaders: nil,
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
 	})
 
 	handler := cors(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +51,8 @@ func TestCORS_AddsHeaders(t *testing.T) {
 	if rec.Header().Get("Access-Control-Allow-Methods") != "GET, POST" {
 		t.Fatalf("expected allow methods header to be set")
 	}
-	if _, ok := rec.Header()["Access-Control-Allow-Headers"]; !ok {
-		t.Fatalf("expected allow headers header to be set")
+	if got := rec.Header().Get("Access-Control-Allow-Headers"); got != "Content-Type, Authorization" {
+		t.Fatalf("expected allow headers header to be set, got %q", got)
 	}
 }
 
@@ -188,7 +188,7 @@ func TestMiddlewareOrdering_CORSBeforeRateLimit(t *testing.T) {
 	cors := NewCORS(CORSConfig{
 		AllowedOrigins: []string{"http://localhost:3000"},
 		AllowedMethods: []string{"GET"},
-		AllowedHeaders: nil,
+		AllowedHeaders: []string{"Content-Type"},
 	})
 	limiter := NewRateLimit(RateLimitConfig{
 		RequestsPerSecond: 1,
