@@ -59,8 +59,7 @@ func BuildGraph(root module.Module) (*Graph, error) {
 		}
 		name := def.Name
 
-		id := uintptr(0)
-		id = val.Pointer()
+		id := val.Pointer()
 
 		if id == 0 {
 			if _, ok := identities[name]; ok {
@@ -123,6 +122,9 @@ func BuildGraph(root module.Module) (*Graph, error) {
 			Def:     def,
 			Imports: imports,
 		})
+		// Store pointer to last appended element. Safe because:
+		// 1) slice only grows during DFS traversal
+		// 2) map is only read after traversal completes
 		graph.Nodes[name] = &graph.Modules[len(graph.Modules)-1]
 		return nil
 	}

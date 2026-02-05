@@ -34,13 +34,13 @@ test-coverage:
 	@echo "mode: atomic" > .coverage/coverage.out
 	@for mod in $(MODULES); do \
 		echo "Testing coverage for module: $$mod"; \
-		(cd $$mod && go test -race -coverprofile=profile.out -covermode=atomic ./... || exit 1); \
+		(cd $$mod && go test -race -coverprofile=profile.out -covermode=atomic ./...) || exit 1; \
 		if [ -f $$mod/profile.out ]; then \
 			tail -n +2 $$mod/profile.out >> .coverage/coverage.out; \
 			rm $$mod/profile.out; \
 		fi; \
 	done
-	@echo "\nTotal Coverage:"
+	@printf "\nTotal Coverage:\n"
 	@go tool cover -func=.coverage/coverage.out | grep "total:"
 
 test-patch-coverage: test-coverage
