@@ -210,7 +210,7 @@ go func() {
 **Alternative:** Implement `RegisterRoutes` and call `Handle` directly.
 
 ```go
-func (c *UsersController) RegisterRoutes(r http.Router) {
+func (c *UsersController) RegisterRoutes(r mkhttp.Router) {
     r.Handle("GET", "/users", c.List)
     r.Handle("POST", "/users", c.Create)
 }
@@ -227,7 +227,7 @@ func (c *UsersController) RegisterRoutes(r http.Router) {
 **Alternative:** Compose middleware for auth, validation, and error handling.
 
 ```go
-router := http.NewRouter()
+router := mkhttp.NewRouter()
 router.Use(RequireAuth)
 router.Use(ValidateJSON)
 router.Use(RecoverErrors)
