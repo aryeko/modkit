@@ -1,10 +1,14 @@
 package kernel
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/go-modkit/modkit/modkit/module"
 )
+
+var ErrExportAmbiguous = errors.New("export token is ambiguous across imports")
+var ErrNilGraph = errors.New("graph is nil")
 
 type RootModuleNilError struct{}
 
@@ -103,6 +107,20 @@ type ExportNotVisibleError struct {
 
 func (e *ExportNotVisibleError) Error() string {
 	return fmt.Sprintf("export not visible: module=%q token=%q", e.Module, e.Token)
+}
+
+type ExportAmbiguousError struct {
+	Module  string
+	Token   module.Token
+	Imports []string
+}
+
+func (e *ExportAmbiguousError) Error() string {
+	return fmt.Sprintf("export token %q in module %q is exported by multiple imports: %v", e.Token, e.Module, e.Imports)
+}
+
+func (e *ExportAmbiguousError) Unwrap() error {
+	return ErrExportAmbiguous
 }
 
 type ProviderNotFoundError struct {

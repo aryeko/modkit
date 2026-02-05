@@ -219,6 +219,50 @@ func TestBuildGraphRejectsProviderWithNilBuild(t *testing.T) {
 	}
 }
 
+func TestGraphTransitiveReExportVisibility(t *testing.T) {
+	token := module.Token("shared.token")
+
+	modC := mod("C", nil, []module.ProviderDef{{Token: token, Build: buildNoop}}, nil, []module.Token{token})
+	modB := mod("B", []module.Module{modC}, nil, nil, []module.Token{token})
+	modA := mod("A", []module.Module{modB}, nil, nil, nil)
+
+	g, err := kernel.BuildGraph(modA)
+	if err != nil {
+		t.Fatalf("BuildGraph failed: %v", err)
+	}
+
+	visibility, err := kernel.BuildVisibility(g)
+	if err != nil {
+		t.Fatalf("BuildVisibility failed: %v", err)
+	}
+
+	if !visibility["A"][token] {
+		t.Fatalf("expected token visible in A via transitive re-export")
+	}
+}
+
+func TestGraphRejectsNonExportedTransitiveToken(t *testing.T) {
+	token := module.Token("shared.token")
+
+	modC := mod("C", nil, []module.ProviderDef{{Token: token, Build: buildNoop}}, nil, nil)
+	modB := mod("B", []module.Module{modC}, nil, nil, nil)
+	modA := mod("A", []module.Module{modB}, nil, nil, nil)
+
+	g, err := kernel.BuildGraph(modA)
+	if err != nil {
+		t.Fatalf("BuildGraph failed: %v", err)
+	}
+
+	visibility, err := kernel.BuildVisibility(g)
+	if err != nil {
+		t.Fatalf("BuildVisibility failed: %v", err)
+	}
+
+	if visibility["A"][token] {
+		t.Fatalf("did not expect token visible in A without exports")
+	}
+}
+
 func TestBuildGraphRejectsControllerWithEmptyName(t *testing.T) {
 	root := mod("A", nil, nil, []module.ControllerDef{{}}, nil)
 
