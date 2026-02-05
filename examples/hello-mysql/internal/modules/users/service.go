@@ -8,6 +8,8 @@ import (
 	modkitlogging "github.com/go-modkit/modkit/modkit/logging"
 )
 
+var longOperationDelay = 2 * time.Second
+
 type Service interface {
 	GetUser(ctx context.Context, id int64) (User, error)
 	CreateUser(ctx context.Context, input CreateUserInput) (User, error)
@@ -60,7 +62,7 @@ func (s *service) LongOperation(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-time.After(2 * time.Second):
+	case <-time.After(longOperationDelay):
 		return nil
 	}
 }

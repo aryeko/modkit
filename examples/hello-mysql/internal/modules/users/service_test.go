@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 )
 
 type stubRepo struct {
@@ -109,5 +110,19 @@ func TestService_LongOperation_RespectsContextCancel(t *testing.T) {
 	err := svc.LongOperation(ctx)
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+}
+
+func TestService_LongOperation_Completes(t *testing.T) {
+	svc := NewService(&stubRepo{}, nil)
+	origDelay := longOperationDelay
+	longOperationDelay = 2 * time.Millisecond
+	t.Cleanup(func() { longOperationDelay = origDelay })
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	if err := svc.LongOperation(ctx); err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 }
