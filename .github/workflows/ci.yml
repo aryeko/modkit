@@ -36,9 +36,9 @@ jobs:
           path: |
             ~/go/bin
             ~/.cache/golangci-lint
-          # Key depends ONLY on tools/tools.go and the root go.sum (where tools versions are pinned)
-          # This prevents tool rebuilds when app dependencies change
-          key: ${{ runner.os }}-tools-${{ hashFiles('tools/tools.go', 'go.sum') }}
+          # Key depends ONLY on tools/go.sum (and tools.go, go.mod)
+          # This completely isolates tool caching from app dependencies
+          key: ${{ runner.os }}-tools-${{ hashFiles('tools/go.sum', 'tools/tools.go', 'tools/go.mod') }}
           restore-keys: |
             ${{ runner.os }}-tools-
 
