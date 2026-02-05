@@ -35,6 +35,7 @@ jobs:
         with:
           path: |
             ~/go/bin
+            ~/go/pkg/mod
             ~/.cache/golangci-lint
           # Key depends ONLY on tools/tools.go and the root go.sum (where tools versions are pinned)
           # This prevents tool rebuilds when app dependencies change
