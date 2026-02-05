@@ -19,11 +19,7 @@ import (
 // @BasePath /
 func main() {
 	cfg := config.Load()
-	jwtTTL, err := time.ParseDuration(cfg.JWTTTL)
-	if err != nil {
-		log.Printf("invalid JWT_TTL %q, using 1h: %v", cfg.JWTTTL, err)
-		jwtTTL = time.Hour
-	}
+	jwtTTL := parseJWTTTL(cfg.JWTTTL)
 
 	authCfg := auth.Config{
 		Secret:   cfg.JWTSecret,
@@ -48,4 +44,13 @@ func main() {
 	if err := modkithttp.Serve(cfg.HTTPAddr, handler); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+func parseJWTTTL(raw string) time.Duration {
+	ttl, err := time.ParseDuration(raw)
+	if err != nil {
+		log.Printf("invalid JWT_TTL %q, using 1h: %v", raw, err)
+		return time.Hour
+	}
+	return ttl
 }
