@@ -22,7 +22,7 @@ func (c *Controller) RegisterRoutes(router modkithttp.Router) {
 // @Tags health
 // @Produce json
 // @Success 200 {object} map[string]string
-// @Router /health [get]
+// @Router /api/v1/health [get]
 func (c *Controller) handleHealth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

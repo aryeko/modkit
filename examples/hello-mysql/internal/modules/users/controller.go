@@ -22,11 +22,11 @@ func NewController(service Service, authMiddleware func(http.Handler) http.Handl
 
 func (c *Controller) RegisterRoutes(router Router) {
 	router.Handle(http.MethodGet, "/users", http.HandlerFunc(c.handleListUsers))
-	router.Handle(http.MethodGet, "/users/{id}", http.HandlerFunc(c.handleGetUser))
 
 	router.Group("/", func(r Router) {
 		r.Use(c.authMiddleware)
 		r.Handle(http.MethodPost, "/users", http.HandlerFunc(c.handleCreateUser))
+		r.Handle(http.MethodGet, "/users/{id}", http.HandlerFunc(c.handleGetUser))
 		r.Handle(http.MethodPut, "/users/{id}", http.HandlerFunc(c.handleUpdateUser))
 		r.Handle(http.MethodDelete, "/users/{id}", http.HandlerFunc(c.handleDeleteUser))
 	})
@@ -40,7 +40,7 @@ func (c *Controller) RegisterRoutes(router Router) {
 // @Success 200 {object} User
 // @Failure 400 {object} Problem
 // @Failure 404 {object} Problem
-// @Router /users/{id} [get]
+// @Router /api/v1/users/{id} [get]
 func (c *Controller) handleGetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -71,7 +71,7 @@ func (c *Controller) handleGetUser(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {object} User
 // @Failure 400 {object} ProblemDetails
 // @Failure 409 {object} Problem
-// @Router /users [post]
+// @Router /api/v1/users [post]
 func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 	var input CreateUserInput
 	if err := decodeJSON(r, &input); err != nil {
@@ -104,7 +104,7 @@ func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 // @Param page query int false "Page (>= 1)"
 // @Param limit query int false "Limit (>= 1)"
 // @Success 200 {array} User
-// @Router /users [get]
+// @Router /api/v1/users [get]
 func (c *Controller) handleListUsers(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	page := 1
@@ -163,7 +163,7 @@ func (c *Controller) handleListUsers(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} User
 // @Failure 400 {object} ProblemDetails
 // @Failure 404 {object} Problem
-// @Router /users/{id} [put]
+// @Router /api/v1/users/{id} [put]
 func (c *Controller) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -205,7 +205,7 @@ func (c *Controller) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Success 204 {object} map[string]string
 // @Failure 400 {object} Problem
 // @Failure 404 {object} Problem
-// @Router /users/{id} [delete]
+// @Router /api/v1/users/{id} [delete]
 func (c *Controller) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
