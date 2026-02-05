@@ -35,6 +35,15 @@ func (c *erroringCloser) Close() error {
 	return c.err
 }
 
+type countingCloser struct {
+	counter *atomic.Int32
+}
+
+func (c *countingCloser) Close() error {
+	c.counter.Add(1)
+	return nil
+}
+
 type testCloser interface {
 	Close() error
 }
@@ -609,5 +618,25 @@ func TestAppCloseIsIdempotent(t *testing.T) {
 
 	if got := len(closed); got != 1 {
 		t.Fatalf("expected 1 close call, got %d", got)
+	}
+}
+
+func TestAppCloseContextCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	counter := &atomic.Int32{}
+	app := newTestAppWithClosers(
+		t,
+		&countingCloser{counter: counter},
+	)
+
+	err := app.CloseContext(ctx)
+
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+	if got := counter.Load(); got != 0 {
+		t.Fatalf("expected 0 closes, got %d", got)
 	}
 }
