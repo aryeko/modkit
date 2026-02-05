@@ -77,3 +77,26 @@ func TestHandler_Login_Success(t *testing.T) {
 		t.Fatalf("parse token: %v", err)
 	}
 }
+
+func TestHandler_Login_IssueTokenFailure(t *testing.T) {
+	cfg := Config{
+		Secret:   "",
+		Issuer:   "test-issuer",
+		TTL:      time.Minute,
+		Username: "demo",
+		Password: "s3cret",
+	}
+
+	handler := NewHandler(cfg)
+	router := modkithttp.NewRouter()
+	handler.RegisterRoutes(modkithttp.AsRouter(router))
+
+	body := []byte(`{"username":"demo","password":"s3cret"}`)
+	req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+}

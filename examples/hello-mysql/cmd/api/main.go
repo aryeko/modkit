@@ -21,19 +21,7 @@ func main() {
 	cfg := config.Load()
 	jwtTTL := parseJWTTTL(cfg.JWTTTL)
 
-	authCfg := auth.Config{
-		Secret:   cfg.JWTSecret,
-		Issuer:   cfg.JWTIssuer,
-		TTL:      jwtTTL,
-		Username: cfg.AuthUsername,
-		Password: cfg.AuthPassword,
-	}
-
-	handler, err := httpserver.BuildHandler(app.Options{
-		HTTPAddr: cfg.HTTPAddr,
-		MySQLDSN: cfg.MySQLDSN,
-		Auth:     authCfg,
-	})
+	handler, err := httpserver.BuildHandler(buildAppOptions(cfg, jwtTTL))
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
@@ -43,6 +31,24 @@ func main() {
 
 	if err := modkithttp.Serve(cfg.HTTPAddr, handler); err != nil {
 		log.Fatalf("server failed: %v", err)
+	}
+}
+
+func buildAppOptions(cfg config.Config, jwtTTL time.Duration) app.Options {
+	return app.Options{
+		HTTPAddr: cfg.HTTPAddr,
+		MySQLDSN: cfg.MySQLDSN,
+		Auth:     buildAuthConfig(cfg, jwtTTL),
+	}
+}
+
+func buildAuthConfig(cfg config.Config, jwtTTL time.Duration) auth.Config {
+	return auth.Config{
+		Secret:   cfg.JWTSecret,
+		Issuer:   cfg.JWTIssuer,
+		TTL:      jwtTTL,
+		Username: cfg.AuthUsername,
+		Password: cfg.AuthPassword,
 	}
 }
 
