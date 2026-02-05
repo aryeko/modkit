@@ -101,25 +101,33 @@ func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 // @Description Returns all users.
 // @Tags users
 // @Produce json
+// @Param page query int false "Page (>= 1)"
+// @Param limit query int false "Limit (>= 1)"
 // @Success 200 {array} User
 // @Router /users [get]
 func (c *Controller) handleListUsers(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
+	page := 1
+	limit := 20
 	var errs validation.ValidationErrors
 	if pageStr := query.Get("page"); pageStr != "" {
-		page, err := strconv.Atoi(pageStr)
+		parsed, err := strconv.Atoi(pageStr)
 		if err != nil {
 			errs.Add("page", "must be a number")
-		} else if page < 1 {
+		} else if parsed < 1 {
 			errs.Add("page", "must be >= 1")
+		} else {
+			page = parsed
 		}
 	}
 	if limitStr := query.Get("limit"); limitStr != "" {
-		limit, err := strconv.Atoi(limitStr)
+		parsed, err := strconv.Atoi(limitStr)
 		if err != nil {
 			errs.Add("limit", "must be a number")
-		} else if limit < 1 {
+		} else if parsed < 1 {
 			errs.Add("limit", "must be >= 1")
+		} else {
+			limit = parsed
 		}
 	}
 	if errs.HasErrors() {
@@ -131,6 +139,16 @@ func (c *Controller) handleListUsers(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpapi.WriteProblem(w, r, http.StatusInternalServerError, "internal error")
 		return
+	}
+	start := (page - 1) * limit
+	if start >= len(users) {
+		users = []User{}
+	} else {
+		end := start + limit
+		if end > len(users) {
+			end = len(users)
+		}
+		users = users[start:end]
 	}
 	writeJSON(w, http.StatusOK, users)
 }

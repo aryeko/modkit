@@ -88,6 +88,15 @@ paths:
   /users:
     get:
       description: Returns all users.
+      parameters:
+      - description: Page (>= 1)
+        in: query
+        name: page
+        type: integer
+      - description: Limit (>= 1)
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:

@@ -174,6 +174,39 @@ func TestController_ListUsers(t *testing.T) {
 	}
 }
 
+func TestController_ListUsers_Pagination(t *testing.T) {
+	svc := stubService{
+		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },
+		listFn: func(ctx context.Context) ([]User, error) {
+			return []User{
+				{ID: 1, Name: "Ada", Email: "ada@example.com"},
+				{ID: 2, Name: "Bea", Email: "bea@example.com"},
+			}, nil
+		},
+		updateFn: func(ctx context.Context, id int64, input UpdateUserInput) (User, error) { return User{}, nil },
+		deleteFn: func(ctx context.Context, id int64) error { return nil },
+	}
+
+	controller := NewController(svc, allowAll)
+	router := modkithttp.NewRouter()
+	controller.RegisterRoutes(modkithttp.AsRouter(router))
+
+	req := httptest.NewRequest(http.MethodGet, "/users?page=2&limit=1", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", rec.Code)
+	}
+	var users []User
+	if err := json.NewDecoder(rec.Body).Decode(&users); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(users) != 1 || users[0].ID != 2 {
+		t.Fatalf("unexpected users: %+v", users)
+	}
+}
+
 func TestController_UpdateUser(t *testing.T) {
 	svc := stubService{
 		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },

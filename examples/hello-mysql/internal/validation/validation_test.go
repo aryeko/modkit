@@ -1,6 +1,11 @@
 package validation
 
-import "testing"
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 func TestValidationErrors_AddAndHasErrors(t *testing.T) {
 	var errs ValidationErrors
@@ -35,6 +40,31 @@ func TestProblemDetails_MapsMultipleFields(t *testing.T) {
 		t.Fatalf("expected 2 invalid params, got %d", len(pd.InvalidParams))
 	}
 	if pd.InvalidParams[0].Name != "name" || pd.InvalidParams[1].Name != "email" {
+		t.Fatalf("unexpected invalid params: %+v", pd.InvalidParams)
+	}
+}
+
+func TestWriteProblemDetails_WritesResponse(t *testing.T) {
+	var errs ValidationErrors
+	errs.Add("name", "is required")
+
+	req := httptest.NewRequest(http.MethodPost, "/users", nil)
+	rec := httptest.NewRecorder()
+
+	WriteProblemDetails(rec, req, errs)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/problem+json" {
+		t.Fatalf("expected content-type application/problem+json, got %q", ct)
+	}
+
+	var pd ProblemDetails
+	if err := json.NewDecoder(rec.Body).Decode(&pd); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(pd.InvalidParams) != 1 || pd.InvalidParams[0].Name != "name" {
 		t.Fatalf("unexpected invalid params: %+v", pd.InvalidParams)
 	}
 }
