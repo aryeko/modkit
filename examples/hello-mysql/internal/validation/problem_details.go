@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -33,4 +34,11 @@ func NewProblemDetails(instance string, errs ValidationErrors) ProblemDetails {
 		Instance:      instance,
 		InvalidParams: invalid,
 	}
+}
+
+func WriteProblemDetails(w http.ResponseWriter, r *http.Request, errs ValidationErrors) {
+	pd := NewProblemDetails(r.URL.Path, errs)
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(pd.Status)
+	_ = json.NewEncoder(w).Encode(pd)
 }

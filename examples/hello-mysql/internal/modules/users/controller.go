@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpapi"
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/validation"
 )
 
 type Controller struct {
@@ -78,7 +79,14 @@ func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if input.Name == "" || input.Email == "" {
-		httpapi.WriteProblem(w, r, http.StatusBadRequest, "name and email required")
+		var errs validation.ValidationErrors
+		if input.Name == "" {
+			errs.Add("name", "is required")
+		}
+		if input.Email == "" {
+			errs.Add("email", "is required")
+		}
+		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
 
@@ -134,7 +142,14 @@ func (c *Controller) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if input.Name == "" || input.Email == "" {
-		httpapi.WriteProblem(w, r, http.StatusBadRequest, "name and email required")
+		var errs validation.ValidationErrors
+		if input.Name == "" {
+			errs.Add("name", "is required")
+		}
+		if input.Email == "" {
+			errs.Add("email", "is required")
+		}
+		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
 
