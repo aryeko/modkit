@@ -2,6 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/aryeko/modkit.svg)](https://pkg.go.dev/github.com/aryeko/modkit)
 [![CI](https://github.com/aryeko/modkit/actions/workflows/ci.yml/badge.svg)](https://github.com/aryeko/modkit/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/aryeko/modkit/branch/main/graph/badge.svg)](https://codecov.io/gh/aryeko/modkit)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aryeko/modkit)](https://goreportcard.com/report/github.com/aryeko/modkit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -129,7 +130,8 @@ See [Architecture Guide](docs/architecture.md) for details.
 **Guides:**
 - [Getting Started](docs/guides/getting-started.md) — Your first modkit app
 - [Modules](docs/guides/modules.md) — Module composition and visibility
-- [Providers](docs/guides/providers.md) — Dependency injection and lifecycle
+- [Providers](docs/guides/providers.md) — Dependency injection patterns
+- [Lifecycle](docs/guides/lifecycle.md) — Provider lifecycle and cleanup
 - [Controllers](docs/guides/controllers.md) — HTTP handlers and routing
 - [Middleware](docs/guides/middleware.md) — Request/response middleware
 - [Interceptors](docs/guides/interceptors.md) — Request/response interception patterns
