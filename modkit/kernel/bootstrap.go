@@ -91,13 +91,12 @@ func (a *App) Closers() []io.Closer {
 	return a.container.closersInBuildOrder()
 }
 
-// Close calls Close on all io.Closer providers in reverse build order.
+// Close closes providers implementing io.Closer in reverse build order.
 func (a *App) Close() error {
 	return a.CloseContext(context.Background())
 }
 
-// CloseContext calls Close on all io.Closer providers in reverse build order,
-// stopping early if the context is canceled.
+// CloseContext closes providers implementing io.Closer in reverse build order.
 func (a *App) CloseContext(ctx context.Context) error {
 	if a.closed.Load() {
 		return nil

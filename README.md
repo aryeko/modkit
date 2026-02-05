@@ -141,6 +141,7 @@ See [Architecture Guide](docs/architecture.md) for details.
 - [Authentication](docs/guides/authentication.md) — Auth middleware and guards
 - [Context Helpers](docs/guides/context-helpers.md) — Typed context keys and helper functions
 - [Testing](docs/guides/testing.md) — Testing patterns
+- [NestJS Compatibility](docs/guides/nestjs-compatibility.md) — Feature parity and Go-idiomatic differences
 - [Comparison](docs/guides/comparison.md) — vs Wire, Fx, and others
 
 **Reference:**

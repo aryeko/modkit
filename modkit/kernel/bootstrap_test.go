@@ -109,6 +109,34 @@ func TestBootstrapAllowsReExportedTokens(t *testing.T) {
 	}
 }
 
+func TestBootstrapRejectsReExportOfNonExportedToken(t *testing.T) {
+	token := module.Token("hidden")
+
+	modB := mod("B", nil,
+		[]module.ProviderDef{{
+			Token: token,
+			Build: func(_ module.Resolver) (any, error) { return "value", nil },
+		}},
+		nil,
+		nil,
+	)
+
+	modA := mod("A", []module.Module{modB}, nil, nil, []module.Token{token})
+
+	_, err := kernel.Bootstrap(modA)
+	if err == nil {
+		t.Fatalf("expected export validation error")
+	}
+
+	var exportErr *kernel.ExportNotVisibleError
+	if !errors.As(err, &exportErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+	if exportErr.Module != "A" || exportErr.Token != token {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestBootstrapRejectsDuplicateProviderTokens(t *testing.T) {
 	shared := module.Token("shared")
 
