@@ -23,6 +23,7 @@ type stubApp struct {
 	closeCalled   bool
 	cleanupCalled bool
 	order         []string
+	closeErr      error
 }
 
 func (s *stubApp) CleanupHooks() []func(context.Context) error {
@@ -38,7 +39,7 @@ func (s *stubApp) CleanupHooks() []func(context.Context) error {
 func (s *stubApp) CloseContext(ctx context.Context) error {
 	s.closeCalled = true
 	s.order = append(s.order, "close")
-	return nil
+	return s.closeErr
 }
 
 func (s *stubServer) ListenAndServe() error {
@@ -55,15 +56,10 @@ func (s *stubServer) Shutdown(ctx context.Context) error {
 
 func TestRunServer_ShutdownPath(t *testing.T) {
 	server := &stubServer{}
+	app := &stubApp{}
 	sigCh := make(chan os.Signal, 1)
 	errCh := make(chan error, 1)
-	cleanupCalled := false
-	hooks := []lifecycle.CleanupHook{
-		func(ctx context.Context) error {
-			cleanupCalled = true
-			return nil
-		},
-	}
+	hooks := buildShutdownHooks(app)
 
 	server.shutdownCh = make(chan struct{})
 	go func() {
@@ -79,8 +75,11 @@ func TestRunServer_ShutdownPath(t *testing.T) {
 	if !server.shutdownCalled {
 		t.Fatal("expected shutdown to be called")
 	}
-	if !cleanupCalled {
-		t.Fatal("expected cleanup to be called")
+	if !app.cleanupCalled {
+		t.Fatal("expected cleanup hook to be called")
+	}
+	if !app.closeCalled {
+		t.Fatal("expected CloseContext to be called")
 	}
 }
 
@@ -135,6 +134,24 @@ func TestRunServer_ShutdownReturnsError(t *testing.T) {
 	err := runServer(50*time.Millisecond, server, sigCh, errCh, nil)
 	if err == nil || err.Error() != "shutdown failed" {
 		t.Fatalf("expected shutdown error, got %v", err)
+	}
+}
+
+func TestRunServer_ShutdownReturnsCloseError(t *testing.T) {
+	server := &stubServer{shutdownCh: make(chan struct{})}
+	app := &stubApp{closeErr: errors.New("close failed")}
+	hooks := buildShutdownHooks(app)
+	sigCh := make(chan os.Signal, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		<-server.shutdownCh
+		errCh <- http.ErrServerClosed
+	}()
+	sigCh <- os.Interrupt
+
+	err := runServer(50*time.Millisecond, server, sigCh, errCh, hooks)
+	if err == nil || err.Error() != "close failed" {
+		t.Fatalf("expected close error, got %v", err)
 	}
 }
 
