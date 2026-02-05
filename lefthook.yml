@@ -1,6 +1,23 @@
 # Lefthook configuration for git hooks
 # Setup: make setup-hooks
 
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: "*.go"
+      run: test -z "$(gofmt -l {staged_files})"
+      fail_text: "Files need formatting. Run 'make fmt'"
+    
+    goimports:
+      glob: "*.go"
+      run: test -z "$(goimports -l {staged_files})"
+      fail_text: "Imports need formatting. Run 'make fmt'"
+    
+    golangci-lint:
+      glob: "*.go"
+      run: golangci-lint run {staged_files}
+
 commit-msg:
   commands:
     commitlint:

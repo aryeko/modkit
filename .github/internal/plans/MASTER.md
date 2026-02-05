@@ -34,8 +34,8 @@ Each item links to its detailed implementation plan.
 | S1 | Commit Validation | 🟢 | [sdlc/01-commit-validation.md](sdlc/01-commit-validation.md) | Lefthook + Go commitlint |
 | S2 | Changelog Automation | ⏭️ | — | Auto-generate CHANGELOG.md from commits |
 | S3 | Release Workflow | ⏭️ | — | GitHub Actions with goreleaser |
-| S4 | Pre-commit Hooks | ⏭️ | — | Run fmt/lint before commit |
-| S5 | Test Coverage | ⏭️ | — | Coverage reporting in CI |
+| S4 | Pre-commit Hooks | 🟢 | — | Run fmt/lint before commit |
+| S5 | Test Coverage | 🟢 | — | Coverage reporting in CI |
 
 ---
 
