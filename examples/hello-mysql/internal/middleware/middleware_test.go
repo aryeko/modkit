@@ -100,8 +100,10 @@ func TestRateLimit_BlocksAfterBurst(t *testing.T) {
 func TestTiming_LogsDuration(t *testing.T) {
 	logger := &testLogger{}
 	timing := NewTiming(logger)
+	minDuration := 10 * time.Millisecond
 
 	handler := timing(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(minDuration)
 		w.WriteHeader(http.StatusCreated)
 	}))
 
@@ -137,7 +139,7 @@ func TestTiming_LogsDuration(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected duration to be time.Duration, got %T", attributes["duration"])
 	}
-	if duration <= 0 {
-		t.Fatalf("expected duration to be > 0, got %v", duration)
+	if duration < minDuration {
+		t.Fatalf("expected duration to be >= %v, got %v", minDuration, duration)
 	}
 }
