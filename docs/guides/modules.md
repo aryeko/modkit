@@ -224,7 +224,7 @@ reexporter := mod("Reexporter", []module.Module{imported}, nil, nil, []module.To
 
 Expected error:
 
-```
+```text
 export not visible: module="Reexporter" token="private.token"
 ```
 
@@ -236,7 +236,7 @@ reexporter := mod("Reexporter", []module.Module{left, right}, nil, nil, []module
 
 Expected error:
 
-```
+```text
 export token "shared.token" in module "Reexporter" is exported by multiple imports: [Left Right]
 ```
 
