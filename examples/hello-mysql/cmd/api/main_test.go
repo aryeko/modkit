@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
 )
 
@@ -78,9 +77,19 @@ func TestBuildAppOptions(t *testing.T) {
 	if opts.MySQLDSN != cfg.MySQLDSN {
 		t.Fatalf("mysql dsn = %q", opts.MySQLDSN)
 	}
-	if opts.Auth != (auth.Config{}) {
-		if opts.Auth.Secret != cfg.JWTSecret || opts.Auth.Issuer != cfg.JWTIssuer || opts.Auth.TTL != ttl {
-			t.Fatalf("auth config mismatch: %+v", opts.Auth)
-		}
+	if opts.Auth.Secret != cfg.JWTSecret {
+		t.Fatalf("auth secret = %q", opts.Auth.Secret)
+	}
+	if opts.Auth.Issuer != cfg.JWTIssuer {
+		t.Fatalf("auth issuer = %q", opts.Auth.Issuer)
+	}
+	if opts.Auth.TTL != ttl {
+		t.Fatalf("auth ttl = %v", opts.Auth.TTL)
+	}
+	if opts.Auth.Username != cfg.AuthUsername {
+		t.Fatalf("auth username = %q", opts.Auth.Username)
+	}
+	if opts.Auth.Password != cfg.AuthPassword {
+		t.Fatalf("auth password = %q", opts.Auth.Password)
 	}
 }
