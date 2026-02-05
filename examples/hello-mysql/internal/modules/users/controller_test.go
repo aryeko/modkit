@@ -374,7 +374,9 @@ func TestController_UpdateUser_InternalError(t *testing.T) {
 	svc := stubService{
 		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },
 		listFn:   func(ctx context.Context) ([]User, error) { return nil, nil },
-		updateFn: func(ctx context.Context, id int64, input UpdateUserInput) (User, error) { return User{}, errors.New("boom") },
+		updateFn: func(ctx context.Context, id int64, input UpdateUserInput) (User, error) {
+			return User{}, errors.New("boom")
+		},
 		deleteFn: func(ctx context.Context, id int64) error { return nil },
 	}
 
