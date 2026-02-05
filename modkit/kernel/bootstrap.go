@@ -82,10 +82,11 @@ func (a *App) Closers() []io.Closer {
 
 // Close calls Close on all io.Closer providers in reverse build order.
 func (a *App) Close() error {
+	var firstErr error
 	for _, closer := range a.container.closersLIFO() {
-		if err := closer.Close(); err != nil {
-			return err
+		if err := closer.Close(); err != nil && firstErr == nil {
+			firstErr = err
 		}
 	}
-	return nil
+	return firstErr
 }

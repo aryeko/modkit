@@ -22,6 +22,17 @@ func (c *recordingCloser) Close() error {
 	return nil
 }
 
+type erroringCloser struct {
+	name   string
+	closed *[]string
+	err    error
+}
+
+func (c *erroringCloser) Close() error {
+	*c.closed = append(*c.closed, c.name)
+	return c.err
+}
+
 func TestAppGetRejectsNotVisibleToken(t *testing.T) {
 	modA := mod("A", nil, nil, nil, nil)
 
@@ -422,5 +433,47 @@ func TestAppCloseReverseOrder(t *testing.T) {
 
 	if len(closed) != 2 || closed[0] != "b" || closed[1] != "a" {
 		t.Fatalf("expected reverse close order, got %v", closed)
+	}
+}
+
+func TestAppCloseContinuesAfterError(t *testing.T) {
+	var closed []string
+	errB := errors.New("close failed")
+	modA := mod("A", nil,
+		[]module.ProviderDef{{
+			Token: "closer.a",
+			Build: func(r module.Resolver) (any, error) {
+				return &recordingCloser{name: "a", closed: &closed}, nil
+			},
+		}, {
+			Token: "closer.b",
+			Build: func(r module.Resolver) (any, error) {
+				return &erroringCloser{name: "b", closed: &closed, err: errB}, nil
+			},
+		}, {
+			Token: "closer.c",
+			Build: func(r module.Resolver) (any, error) {
+				return &recordingCloser{name: "c", closed: &closed}, nil
+			},
+		}},
+		nil,
+		nil,
+	)
+
+	app, err := kernel.Bootstrap(modA)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+
+	_, _ = app.Get("closer.a")
+	_, _ = app.Get("closer.b")
+	_, _ = app.Get("closer.c")
+
+	if err := app.Close(); !errors.Is(err, errB) {
+		t.Fatalf("expected error %v, got %v", errB, err)
+	}
+
+	if len(closed) != 3 || closed[0] != "c" || closed[1] != "b" || closed[2] != "a" {
+		t.Fatalf("expected reverse close order with all closers, got %v", closed)
 	}
 }
