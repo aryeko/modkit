@@ -6,8 +6,12 @@ GOPATH ?= $(shell go env GOPATH)
 GOIMPORTS ?= $(GOPATH)/bin/goimports
 GOLANGCI_LINT ?= $(GOPATH)/bin/golangci-lint
 GOVULNCHECK ?= $(GOPATH)/bin/govulncheck
+GO_PATCH_COVER ?= $(GOPATH)/bin/go-patch-cover
 LEFTHOOK ?= $(GOPATH)/bin/lefthook
 COMMITLINT ?= $(GOPATH)/bin/commitlint
+
+# Find all directories with go.mod, excluding hidden dirs (like .worktrees) and vendor
+MODULES = $(shell find . -type f -name "go.mod" -not -path "*/.*/*" -not -path "*/vendor/*" -exec dirname {} \;)
 
 fmt: tools
 	gofmt -w .
@@ -20,31 +24,31 @@ vuln:
 	$(GOVULNCHECK) ./...
 
 test:
-	go test ./...
+	@for mod in $(MODULES); do \
+		echo "Testing module: $$mod"; \
+		(cd $$mod && go test -race -timeout=5m ./...) || exit 1; \
+	done
 
 test-coverage:
 	@mkdir -p .coverage
-	go test -race -coverprofile=.coverage/coverage.out -covermode=atomic ./...
-	go test -race -coverprofile=.coverage/coverage-examples.out -covermode=atomic ./examples/hello-mysql/...
+	@echo "mode: atomic" > .coverage/coverage.out
+	@for mod in $(MODULES); do \
+		echo "Testing coverage for module: $$mod"; \
+		(cd $$mod && go test -race -coverprofile=profile.out -covermode=atomic ./...) || exit 1; \
+		if [ -f $$mod/profile.out ]; then \
+			tail -n +2 $$mod/profile.out >> .coverage/coverage.out; \
+			rm $$mod/profile.out; \
+		fi; \
+	done
+	@printf "\nTotal Coverage:\n"
+	@go tool cover -func=.coverage/coverage.out | grep "total:"
 
-test-patch-coverage:
-	@mkdir -p .coverage
-	@changed=$$(git diff --name-only origin/main...HEAD --diff-filter=AM | grep '\.go$$' || true); \
-	if [ -z "$$changed" ]; then \
-		echo "No changed Go files detected vs origin/main."; \
-		exit 0; \
-	fi; \
-	pkgs=$$(echo "$$changed" | xargs -n1 dirname | sort -u | awk '{ if ($$0 == ".") { print "./..." } else { print "./"$$0"/..." } }' | tr '\n' ' '); \
-	echo "Running patch coverage for packages:"; \
-	echo "$$pkgs" | tr ' ' '\n'; \
-	go test -race -coverprofile=.coverage/coverage-patch.out -covermode=atomic $$pkgs; \
-	exclude_pattern=$$(awk '/^ignore:/{flag=1; next} /^[a-z]/ && !/^ignore:/{flag=0} flag && /^  -/{gsub(/^[[:space:]]*-[[:space:]]*"/,""); gsub(/"$$/,""); print}' codecov.yml 2>/dev/null | tr '\n' '|' | sed 's/|$$//'); \
-	if [ -n "$$exclude_pattern" ]; then \
-		grep -vE "$$exclude_pattern" .coverage/coverage-patch.out > .coverage/coverage-patch-filtered.out || cp .coverage/coverage-patch.out .coverage/coverage-patch-filtered.out; \
-		go tool cover -func=.coverage/coverage-patch-filtered.out; \
-	else \
-		go tool cover -func=.coverage/coverage-patch.out; \
-	fi
+test-patch-coverage: test-coverage
+	@echo "Comparing against origin/main..."
+	@git diff -U0 --no-color origin/main...HEAD > .coverage/diff.patch
+	@$(GO_PATCH_COVER) .coverage/coverage.out .coverage/diff.patch > .coverage/patch_coverage.out
+	@echo "Patch Coverage Report:"
+	@cat .coverage/patch_coverage.out
 
 # Install all development tools (tracked in tools/tools.go)
 tools:
@@ -59,7 +63,7 @@ setup-hooks: tools
 		echo "Warning: lefthook not found in PATH. Ensure \$$GOPATH/bin is in your PATH:"; \
 		echo "  export PATH=\"\$$(go env GOPATH)/bin:\$$PATH\""; \
 	fi
-	$(LEFTHOOK) install
+	$(LEFTHOOK) install --force
 	@echo "Done: Git hooks installed"
 
 # Validate a commit message (for manual testing)

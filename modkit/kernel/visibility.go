@@ -2,8 +2,12 @@ package kernel
 
 import "github.com/go-modkit/modkit/modkit/module"
 
+// Visibility represents which provider tokens are accessible from each module.
+// The outer map key is the module name, the inner map contains visible tokens.
 type Visibility map[string]map[module.Token]bool
 
+// BuildVisibility constructs the visibility map for all modules in the graph,
+// ensuring exports are valid and detecting ambiguous re-exports.
 func BuildVisibility(graph *Graph) (Visibility, error) {
 	if graph == nil {
 		return nil, ErrNilGraph
@@ -15,7 +19,8 @@ func buildVisibility(graph *Graph) (Visibility, error) {
 	visibility := make(Visibility)
 	effectiveExports := make(map[string]map[module.Token]bool)
 
-	for _, node := range graph.Modules {
+	for i := range graph.Modules {
+		node := &graph.Modules[i]
 		visible := make(map[module.Token]bool)
 		importExporters := make(map[module.Token][]string)
 		for _, provider := range node.Def.Providers {

@@ -7,6 +7,7 @@ import (
 	"github.com/go-modkit/modkit/modkit/module"
 )
 
+// ModuleNode represents a module in the dependency graph with its definition and import names.
 type ModuleNode struct {
 	Name    string
 	Module  module.Module
@@ -14,12 +15,15 @@ type ModuleNode struct {
 	Imports []string
 }
 
+// Graph represents the complete module dependency graph with all nodes and import relationships.
 type Graph struct {
 	Root    string
 	Modules []ModuleNode
 	Nodes   map[string]*ModuleNode
 }
 
+// BuildGraph constructs the module dependency graph starting from the root module.
+// It validates module metadata, checks for cycles, and ensures all imports are valid.
 func BuildGraph(root module.Module) (*Graph, error) {
 	if root == nil {
 		return nil, &RootModuleNilError{}
@@ -50,13 +54,12 @@ func BuildGraph(root module.Module) (*Graph, error) {
 		if val.Kind() != reflect.Ptr {
 			return &ModuleNotPointerError{Module: def.Name}
 		}
-		if err := validateModuleDef(def); err != nil {
+		if err := validateModuleDef(&def); err != nil {
 			return err
 		}
 		name := def.Name
 
-		id := uintptr(0)
-		id = val.Pointer()
+		id := val.Pointer()
 
 		if id == 0 {
 			if _, ok := identities[name]; ok {
@@ -119,6 +122,9 @@ func BuildGraph(root module.Module) (*Graph, error) {
 			Def:     def,
 			Imports: imports,
 		})
+		// Store pointer to last appended element. Safe because:
+		// 1) slice only grows during DFS traversal
+		// 2) map is only read after traversal completes
 		graph.Nodes[name] = &graph.Modules[len(graph.Modules)-1]
 		return nil
 	}
@@ -130,7 +136,8 @@ func BuildGraph(root module.Module) (*Graph, error) {
 	graph.Root = root.Definition().Name
 
 	providerTokens := make(map[module.Token]string)
-	for _, node := range graph.Modules {
+	for i := range graph.Modules {
+		node := &graph.Modules[i]
 		for _, provider := range node.Def.Providers {
 			if existing, ok := providerTokens[provider.Token]; ok {
 				return nil, &DuplicateProviderTokenError{
@@ -145,7 +152,7 @@ func BuildGraph(root module.Module) (*Graph, error) {
 	return graph, nil
 }
 
-func validateModuleDef(def module.ModuleDef) error {
+func validateModuleDef(def *module.ModuleDef) error {
 	if def.Name == "" {
 		return &InvalidModuleDefError{Module: def.Name, Reason: "module name is empty"}
 	}
