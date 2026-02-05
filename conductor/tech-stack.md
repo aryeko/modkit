@@ -1,8 +1,10 @@
 # Technology Stack
 
 ## Core
-- **Language:** Go 1.25
+- **Language:** Go 1.25.7+
 - **Framework:** `modkit` (This project is the framework itself)
+
+We pin the patch level to 1.25.7 in CI to align with vulnerability scanning and keep a consistent security posture.
 
 ## Runtime Dependencies
 - **HTTP Router:** `github.com/go-chi/chi/v5` - Used as the underlying router for the `modkit/http` adapter.
