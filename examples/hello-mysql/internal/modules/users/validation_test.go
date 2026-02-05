@@ -217,3 +217,31 @@ func TestController_UpdateUser_InvalidJSONBody(t *testing.T) {
 		t.Fatalf("expected invalidParams to include body, got %+v", problem.InvalidParams)
 	}
 }
+
+func TestController_ListUsers_Validation(t *testing.T) {
+	svc := stubService{
+		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },
+		listFn:   func(ctx context.Context) ([]User, error) { return nil, nil },
+		updateFn: func(ctx context.Context, id int64, input UpdateUserInput) (User, error) { return User{}, nil },
+		deleteFn: func(ctx context.Context, id int64) error { return nil },
+	}
+
+	controller := NewController(svc)
+	router := modkithttp.NewRouter()
+	controller.RegisterRoutes(modkithttp.AsRouter(router))
+
+	req := httptest.NewRequest(http.MethodGet, "/users?page=-1&limit=0", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+	var problem validation.ProblemDetails
+	if err := json.NewDecoder(rec.Body).Decode(&problem); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(problem.InvalidParams) != 2 {
+		t.Fatalf("expected 2 invalid params, got %d", len(problem.InvalidParams))
+	}
+}

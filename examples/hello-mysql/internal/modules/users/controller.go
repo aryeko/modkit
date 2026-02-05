@@ -104,6 +104,29 @@ func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {array} User
 // @Router /users [get]
 func (c *Controller) handleListUsers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	var errs validation.ValidationErrors
+	if pageStr := query.Get("page"); pageStr != "" {
+		page, err := strconv.Atoi(pageStr)
+		if err != nil {
+			errs.Add("page", "must be a number")
+		} else if page < 1 {
+			errs.Add("page", "must be >= 1")
+		}
+	}
+	if limitStr := query.Get("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil {
+			errs.Add("limit", "must be a number")
+		} else if limit < 1 {
+			errs.Add("limit", "must be >= 1")
+		}
+	}
+	if errs.HasErrors() {
+		validation.WriteProblemDetails(w, r, errs)
+		return
+	}
+
 	users, err := c.service.ListUsers(r.Context())
 	if err != nil {
 		httpapi.WriteProblem(w, r, http.StatusInternalServerError, "internal error")
