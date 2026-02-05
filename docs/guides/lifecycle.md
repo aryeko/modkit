@@ -156,9 +156,9 @@ func main() {
 }
 ```
 
-`CloseContext` will return `ctx.Err()` if the context is canceled, but it does not interrupt
-closing providers once shutdown begins. Context timeouts are reported as errors; they do not
-bound the close duration. Use `App.Close()` if you don't need context-aware errors.
+`CloseContext` checks `ctx.Err()` before starting and before each provider close. If the context
+is canceled, it returns `ctx.Err()` and leaves the app eligible for a later `Close()` retry.
+Use `App.Close()` if you don't need context-aware cancellation behavior.
 
 ### Alternative 1: Cleanup in main()
 

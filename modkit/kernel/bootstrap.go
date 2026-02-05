@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
+	"sync/atomic"
 
 	"github.com/go-modkit/modkit/modkit/module"
 )
@@ -16,8 +16,8 @@ type App struct {
 	Graph       *Graph
 	container   *Container
 	Controllers map[string]any
-	closeOnce   sync.Once
-	closeErr    error
+	closed      atomic.Bool
+	closing     atomic.Bool
 }
 
 func controllerKey(moduleName, controllerName string) string {
@@ -98,20 +98,32 @@ func (a *App) Close() error {
 
 // CloseContext closes providers implementing io.Closer in reverse build order.
 func (a *App) CloseContext(ctx context.Context) error {
-	a.closeOnce.Do(func() {
-		closers := a.container.closersLIFO()
-		var errs []error
-		for _, closer := range closers {
-			if err := closer.Close(); err != nil {
-				errs = append(errs, err)
-			}
+	if a.closed.Load() {
+		return nil
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if !a.closing.CompareAndSwap(false, true) {
+		return nil
+	}
+	defer a.closing.Store(false)
+
+	var errs []error
+	for _, closer := range a.container.closersLIFO() {
+		if err := ctx.Err(); err != nil {
+			return err
 		}
-		if ctx != nil && ctx.Err() != nil {
-			errs = append(errs, ctx.Err())
+		if err := closer.Close(); err != nil {
+			errs = append(errs, err)
 		}
-		if len(errs) > 0 {
-			a.closeErr = errors.Join(errs...)
-		}
-	})
-	return a.closeErr
+	}
+	if len(errs) == 0 {
+		a.closed.Store(true)
+		return nil
+	}
+	a.closed.Store(true)
+	return errors.Join(errs...)
 }
