@@ -98,6 +98,10 @@ func (a *App) Close() error {
 // CloseContext calls Close on all io.Closer providers in reverse build order,
 // stopping early if the context is canceled.
 func (a *App) CloseContext(ctx context.Context) error {
+	if a.closed.Load() {
+		return nil
+	}
+
 	if err := ctx.Err(); err != nil {
 		return err
 	}

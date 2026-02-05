@@ -667,3 +667,29 @@ func TestAppCloseContextCanceledAllowsLaterClose(t *testing.T) {
 		t.Fatalf("expected 1 close after Close, got %d", got)
 	}
 }
+
+func TestAppCloseContextCanceledAfterCloseReturnsNil(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	counter := &atomic.Int32{}
+	app := newTestAppWithClosers(
+		t,
+		&countingCloser{counter: counter},
+	)
+
+	if err := app.Close(); err != nil {
+		t.Fatalf("expected nil error on Close, got %v", err)
+	}
+	if got := counter.Load(); got != 1 {
+		t.Fatalf("expected 1 close after Close, got %d", got)
+	}
+
+	err := app.CloseContext(ctx)
+	if err != nil {
+		t.Fatalf("expected nil error on CloseContext after Close, got %v", err)
+	}
+	if got := counter.Load(); got != 1 {
+		t.Fatalf("expected no additional closes after CloseContext, got %d", got)
+	}
+}
