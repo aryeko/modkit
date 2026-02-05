@@ -2,8 +2,10 @@ package users
 
 import (
 	"database/sql"
+	"net/http"
 	"time"
 
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/database"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/logging"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/sqlc"
@@ -19,6 +21,7 @@ const (
 
 type Options struct {
 	Database module.Module
+	Auth     module.Module
 }
 
 type Module struct {
@@ -34,7 +37,7 @@ func NewModule(opts Options) module.Module {
 func (m Module) Definition() module.ModuleDef {
 	return module.ModuleDef{
 		Name:    "users",
-		Imports: []module.Module{m.opts.Database},
+		Imports: []module.Module{m.opts.Database, m.opts.Auth},
 		Providers: []module.ProviderDef{
 			{
 				Token: TokenRepository,
@@ -66,7 +69,11 @@ func (m Module) Definition() module.ModuleDef {
 					if err != nil {
 						return nil, err
 					}
-					return NewController(svcAny.(Service)), nil
+					authAny, err := r.Get(auth.TokenMiddleware)
+					if err != nil {
+						return nil, err
+					}
+					return NewController(svcAny.(Service), authAny.(func(http.Handler) http.Handler)), nil
 				},
 			},
 		},

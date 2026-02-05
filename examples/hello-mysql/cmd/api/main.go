@@ -2,10 +2,12 @@ package main
 
 import (
 	"log"
+	"time"
 
 	_ "github.com/go-modkit/modkit/examples/hello-mysql/docs"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpserver"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/app"
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/logging"
 	modkithttp "github.com/go-modkit/modkit/modkit/http"
@@ -17,7 +19,9 @@ import (
 // @BasePath /
 func main() {
 	cfg := config.Load()
-	handler, err := httpserver.BuildHandler(app.Options{HTTPAddr: cfg.HTTPAddr, MySQLDSN: cfg.MySQLDSN})
+	jwtTTL := parseJWTTTL(cfg.JWTTTL)
+
+	handler, err := httpserver.BuildHandler(buildAppOptions(cfg, jwtTTL))
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
@@ -28,4 +32,35 @@ func main() {
 	if err := modkithttp.Serve(cfg.HTTPAddr, handler); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
+}
+
+func buildAppOptions(cfg config.Config, jwtTTL time.Duration) app.Options {
+	return app.Options{
+		HTTPAddr: cfg.HTTPAddr,
+		MySQLDSN: cfg.MySQLDSN,
+		Auth:     buildAuthConfig(cfg, jwtTTL),
+	}
+}
+
+func buildAuthConfig(cfg config.Config, jwtTTL time.Duration) auth.Config {
+	return auth.Config{
+		Secret:   cfg.JWTSecret,
+		Issuer:   cfg.JWTIssuer,
+		TTL:      jwtTTL,
+		Username: cfg.AuthUsername,
+		Password: cfg.AuthPassword,
+	}
+}
+
+func parseJWTTTL(raw string) time.Duration {
+	ttl, err := time.ParseDuration(raw)
+	if err != nil {
+		log.Printf("invalid JWT_TTL %q, using 1h: %v", raw, err)
+		return time.Hour
+	}
+	if ttl <= 0 {
+		log.Printf("invalid JWT_TTL %q, using 1h: non-positive duration", raw)
+		return time.Hour
+	}
+	return ttl
 }
