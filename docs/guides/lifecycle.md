@@ -156,8 +156,25 @@ func main() {
 }
 ```
 
-`CloseContext` checks `ctx.Err()` before starting and before each provider close. If the context
-is canceled, it returns `ctx.Err()` and leaves the app eligible for a later `Close()` retry.
+`Close()` closes providers in reverse build order.
+Close is idempotent and safe to call: once it completes (even if it returned aggregated errors),
+subsequent calls return `nil` and do not re-close providers.
+
+For context-aware shutdown, use `CloseContext(ctx)`:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+defer cancel()
+
+if err := app.CloseContext(ctx); err != nil {
+    // Returns ctx.Err() if canceled or timed out
+    log.Printf("shutdown error: %v", err)
+}
+```
+
+`CloseContext` checks `ctx.Err()` before closing and before each closer. If the context
+is canceled or times out, it returns `ctx.Err()` and leaves the app eligible for a
+later `Close()` retry. While a close is in progress, concurrent close calls are no-ops.
 Use `App.Close()` if you don't need context-aware cancellation behavior.
 
 ### Alternative 1: Cleanup in main()
@@ -264,6 +281,49 @@ func main() {
     
     // Start server
     mkhttp.Serve(":8080", router)  // Graceful shutdown on SIGINT/SIGTERM
+}
+```
+
+### Pattern 4: signal.NotifyContext Shutdown
+
+Use `signal.NotifyContext` for standard Go signal handling, then shut down the server and close providers:
+
+```go
+func main() {
+    ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+    defer stop()
+
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    router := mkhttp.NewRouter()
+    mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
+
+    srv := &http.Server{
+        Addr:    ":8080",
+        Handler: router,
+    }
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+            log.Printf("server error: %v", err)
+        }
+    }()
+
+    <-ctx.Done()
+
+    shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    if err := srv.Shutdown(shutdownCtx); err != nil {
+        log.Printf("server shutdown error: %v", err)
+    }
+
+    if err := app.Close(); err != nil {
+        log.Printf("app close error: %v", err)
+    }
 }
 ```
 
