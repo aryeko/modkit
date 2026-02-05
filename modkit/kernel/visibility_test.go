@@ -56,17 +56,21 @@ func TestVisibilityRejectsReExportOfNonExportedImportToken(t *testing.T) {
 
 func TestVisibilityRejectsAmbiguousReExport(t *testing.T) {
 	token := module.Token("shared.token")
-	left := mod("Left", nil, []module.ProviderDef{{Token: token, Build: buildNoop}}, nil, []module.Token{token})
-	right := mod("Right", nil, []module.ProviderDef{{Token: token, Build: buildNoop}}, nil, []module.Token{token})
+	shared := mod("Shared", nil, []module.ProviderDef{{Token: token, Build: buildNoop}}, nil, []module.Token{token})
+	left := mod("Left", []module.Module{shared}, nil, nil, []module.Token{token})
+	right := mod("Right", []module.Module{shared}, nil, nil, []module.Token{token})
 	reexporter := mod("Reexporter", []module.Module{left, right}, nil, nil, []module.Token{token})
 
 	g, err := kernel.BuildGraph(reexporter)
+	if err != nil {
+		t.Fatalf("BuildGraph failed: %v", err)
+	}
+
+	_, err = kernel.BuildVisibility(g)
 	if err == nil {
-		t.Fatalf("expected BuildGraph error for duplicate provider token")
+		t.Fatalf("expected ambiguity error")
 	}
-	var dupErr *kernel.DuplicateProviderTokenError
-	if !errors.As(err, &dupErr) {
-		t.Fatalf("unexpected error type: %T", err)
+	if !errors.Is(err, kernel.ErrExportAmbiguous) {
+		t.Fatalf("unexpected error: %v", err)
 	}
-	_ = g
 }
