@@ -6,6 +6,7 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 - Modules: `AppModule`, `DatabaseModule`, `UsersModule`, `AuditModule` (consumes `UsersService` export).
 - Endpoints:
   - `GET /health` → `{ "status": "ok" }`
+  - `POST /auth/login` → demo JWT token
   - `POST /users` → create user
   - `GET /users` → list users
   - `GET /users/{id}` → user payload
@@ -17,6 +18,16 @@ Example consuming app for modkit using MySQL, sqlc, and migrations.
 - Migrations and sqlc-generated queries.
 - JSON request logging via `log/slog`.
 - Errors use RFC 7807 Problem Details (`application/problem+json`).
+
+## Auth
+- Demo login endpoint: `POST /auth/login` returns a JWT.
+- Protected routes (require `Authorization: Bearer <token>`):
+  - `POST /users`
+  - `GET /users/{id}`
+  - `PUT /users/{id}`
+  - `DELETE /users/{id}`
+- Public route:
+  - `GET /users`
 
 ## Run (Docker Compose + Local Migrate)
 
@@ -30,12 +41,27 @@ Then hit:
 
 ```bash
 curl http://localhost:8080/health
-curl -X POST http://localhost:8080/users -H 'Content-Type: application/json' -d '{"name":"Ada","email":"ada@example.com"}'
+
+# Login to get a token (demo credentials). Requires `jq` for parsing.
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"demo","password":"demo"}' | jq -r '.token')
+
+# Public route
 curl http://localhost:8080/users
-curl http://localhost:8080/users/1
-curl -X PUT http://localhost:8080/users/1 -H 'Content-Type: application/json' -d '{"name":"Ada Lovelace","email":"ada@example.com"}'
-curl -X DELETE http://localhost:8080/users/1
-curl -X POST http://localhost:8080/users -H 'Content-Type: application/json' -d '{"name":"Ada","email":"ada@example.com"}'
+
+# Protected routes (require Authorization header)
+curl -X POST http://localhost:8080/users \
+  -H 'Authorization: Bearer '"$TOKEN"'' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Ada","email":"ada@example.com"}'
+curl -H 'Authorization: Bearer '"$TOKEN"'' http://localhost:8080/users/1
+curl -X PUT http://localhost:8080/users/1 \
+  -H 'Authorization: Bearer '"$TOKEN"'' \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Ada Lovelace","email":"ada@example.com"}'
+curl -X DELETE http://localhost:8080/users/1 -H 'Authorization: Bearer '"$TOKEN"''
+
 open http://localhost:8080/docs/index.html
 ```
 
@@ -70,6 +96,11 @@ The compose services build from `examples/hello-mysql/Dockerfile`.
 Environment variables:
 - `HTTP_ADDR` (default `:8080`)
 - `MYSQL_DSN` (default `root:password@tcp(localhost:3306)/app?parseTime=true&multiStatements=true`)
+- `JWT_SECRET` (default `dev-secret-change-me`)
+- `JWT_ISSUER` (default `hello-mysql`)
+- `JWT_TTL` (default `1h`)
+- `AUTH_USERNAME` (default `demo`)
+- `AUTH_PASSWORD` (default `demo`)
 - `LOG_FORMAT` (`text` or `json`, default `text`)
 - `LOG_LEVEL` (`debug`, `info`, `warn`, `error`, default `info`)
 - `LOG_COLOR` (`auto`, `on`, `off`, default `auto`)
