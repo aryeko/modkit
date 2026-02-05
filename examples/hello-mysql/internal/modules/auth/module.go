@@ -37,5 +37,6 @@ func (m Module) Definition() module.ModuleDef {
 				},
 			},
 		},
+		Exports: []module.Token{TokenMiddleware},
 	}
 }

@@ -1,6 +1,7 @@
 package smoke
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpserver"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/app"
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/mysql"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -32,7 +34,17 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 		t.Fatalf("seed failed: %v", err)
 	}
 
-	handler, err := httpserver.BuildHandler(app.Options{HTTPAddr: ":8080", MySQLDSN: dsn})
+	handler, err := httpserver.BuildHandler(app.Options{
+		HTTPAddr: ":8080",
+		MySQLDSN: dsn,
+		Auth: auth.Config{
+			Secret:   "dev-secret-change-me",
+			Issuer:   "hello-mysql",
+			TTL:      time.Hour,
+			Username: "demo",
+			Password: "demo",
+		},
+	})
 	if err != nil {
 		t.Fatalf("build handler failed: %v", err)
 	}
@@ -48,7 +60,35 @@ func TestSmoke_HealthAndUsers(t *testing.T) {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 
-	resp, err = http.Get(srv.URL + "/users/1")
+	loginBody := []byte(`{"username":"demo","password":"demo"}`)
+	loginReq, err := http.NewRequest(http.MethodPost, srv.URL+"/auth/login", bytes.NewReader(loginBody))
+	if err != nil {
+		t.Fatalf("login request failed: %v", err)
+	}
+	loginReq.Header.Set("Content-Type", "application/json")
+	loginResp, err := http.DefaultClient.Do(loginReq)
+	if err != nil {
+		t.Fatalf("login request failed: %v", err)
+	}
+	if loginResp.StatusCode != http.StatusOK {
+		t.Fatalf("expected login 200, got %d", loginResp.StatusCode)
+	}
+	var loginPayload struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(loginResp.Body).Decode(&loginPayload); err != nil {
+		t.Fatalf("decode login response: %v", err)
+	}
+	if loginPayload.Token == "" {
+		t.Fatalf("expected login token")
+	}
+
+	userReq, err := http.NewRequest(http.MethodGet, srv.URL+"/users/1", nil)
+	if err != nil {
+		t.Fatalf("users request failed: %v", err)
+	}
+	userReq.Header.Set("Authorization", "Bearer "+loginPayload.Token)
+	resp, err = http.DefaultClient.Do(userReq)
 	if err != nil {
 		t.Fatalf("users request failed: %v", err)
 	}

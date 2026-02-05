@@ -11,19 +11,24 @@ import (
 )
 
 type Controller struct {
-	service Service
+	service        Service
+	authMiddleware func(http.Handler) http.Handler
 }
 
-func NewController(service Service) *Controller {
-	return &Controller{service: service}
+func NewController(service Service, authMiddleware func(http.Handler) http.Handler) *Controller {
+	return &Controller{service: service, authMiddleware: authMiddleware}
 }
 
 func (c *Controller) RegisterRoutes(router Router) {
-	router.Handle(http.MethodGet, "/users/{id}", http.HandlerFunc(c.handleGetUser))
-	router.Handle(http.MethodPost, "/users", http.HandlerFunc(c.handleCreateUser))
 	router.Handle(http.MethodGet, "/users", http.HandlerFunc(c.handleListUsers))
-	router.Handle(http.MethodPut, "/users/{id}", http.HandlerFunc(c.handleUpdateUser))
-	router.Handle(http.MethodDelete, "/users/{id}", http.HandlerFunc(c.handleDeleteUser))
+
+	router.Group("/", func(r Router) {
+		r.Use(c.authMiddleware)
+		r.Handle(http.MethodGet, "/users/{id}", http.HandlerFunc(c.handleGetUser))
+		r.Handle(http.MethodPost, "/users", http.HandlerFunc(c.handleCreateUser))
+		r.Handle(http.MethodPut, "/users/{id}", http.HandlerFunc(c.handleUpdateUser))
+		r.Handle(http.MethodDelete, "/users/{id}", http.HandlerFunc(c.handleDeleteUser))
+	})
 }
 
 // @Summary Get user

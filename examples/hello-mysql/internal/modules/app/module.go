@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/audit"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/database"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/users"
@@ -12,6 +13,7 @@ const HealthControllerID = "HealthController"
 type Options struct {
 	HTTPAddr string
 	MySQLDSN string
+	Auth     auth.Config
 }
 
 type Module struct {
@@ -26,12 +28,13 @@ func NewModule(opts Options) module.Module {
 
 func (m *Module) Definition() module.ModuleDef {
 	dbModule := database.NewModule(database.Options{DSN: m.opts.MySQLDSN})
-	usersModule := users.NewModule(users.Options{Database: dbModule})
+	authModule := auth.NewModule(auth.Options{Config: m.opts.Auth})
+	usersModule := users.NewModule(users.Options{Database: dbModule, Auth: authModule})
 	auditModule := audit.NewModule(audit.Options{Users: usersModule})
 
 	return module.ModuleDef{
 		Name:    "app",
-		Imports: []module.Module{dbModule, usersModule, auditModule},
+		Imports: []module.Module{dbModule, authModule, usersModule, auditModule},
 		Controllers: []module.ControllerDef{
 			{
 				Name: HealthControllerID,
