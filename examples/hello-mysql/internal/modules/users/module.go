@@ -31,7 +31,7 @@ type Module struct {
 type UsersModule = Module
 
 func NewModule(opts Options) module.Module {
-	return Module{opts: opts}
+	return &Module{opts: opts}
 }
 
 func (m Module) Definition() module.ModuleDef {

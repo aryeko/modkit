@@ -17,7 +17,7 @@ func TestModule_Bootstrap(t *testing.T) {
 
 func TestAuthModule_Definition(t *testing.T) {
 	cfg := Config{Secret: "secret", Issuer: "issuer", TTL: time.Minute}
-	def := NewModule(Options{Config: cfg}).(Module).Definition()
+	def := NewModule(Options{Config: cfg}).(*Module).Definition()
 
 	if def.Name != "auth" {
 		t.Fatalf("name = %q", def.Name)

@@ -9,7 +9,7 @@ import (
 
 func TestUsersModule_Definition_WiresAuth(t *testing.T) {
 	mod := NewModule(Options{Database: &database.Module{}, Auth: auth.NewModule(auth.Options{})})
-	def := mod.(Module).Definition()
+	def := mod.(*Module).Definition()
 
 	if def.Name != "users" {
 		t.Fatalf("name = %q", def.Name)
