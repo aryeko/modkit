@@ -17,6 +17,7 @@ type App struct {
 	container   *Container
 	Controllers map[string]any
 	closed      atomic.Bool
+	closing     atomic.Bool
 }
 
 func controllerKey(moduleName, controllerName string) string {
@@ -106,9 +107,10 @@ func (a *App) CloseContext(ctx context.Context) error {
 		return err
 	}
 
-	if !a.closed.CompareAndSwap(false, true) {
+	if !a.closing.CompareAndSwap(false, true) {
 		return nil
 	}
+	defer a.closing.Store(false)
 
 	var errs []error
 	for _, closer := range a.container.closersLIFO() {
@@ -120,7 +122,9 @@ func (a *App) CloseContext(ctx context.Context) error {
 		}
 	}
 	if len(errs) == 0 {
+		a.closed.Store(true)
 		return nil
 	}
+	a.closed.Store(true)
 	return errors.Join(errs...)
 }

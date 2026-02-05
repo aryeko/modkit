@@ -44,6 +44,15 @@ func (c *countingCloser) Close() error {
 	return nil
 }
 
+type cancelingCloser struct {
+	cancel func()
+}
+
+func (c *cancelingCloser) Close() error {
+	c.cancel()
+	return nil
+}
+
 type testCloser interface {
 	Close() error
 }
@@ -691,5 +700,31 @@ func TestAppCloseContextCanceledAfterCloseReturnsNil(t *testing.T) {
 	}
 	if got := counter.Load(); got != 1 {
 		t.Fatalf("expected no additional closes after CloseContext, got %d", got)
+	}
+}
+
+func TestAppCloseContextCanceledMidCloseAllowsLaterClose(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	counter := &atomic.Int32{}
+	app := newTestAppWithClosers(
+		t,
+		&countingCloser{counter: counter},
+		&cancelingCloser{cancel: cancel},
+	)
+
+	err := app.CloseContext(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected context.Canceled, got %v", err)
+	}
+	if got := counter.Load(); got != 0 {
+		t.Fatalf("expected 0 closes after canceled CloseContext, got %d", got)
+	}
+
+	if err := app.Close(); err != nil {
+		t.Fatalf("expected nil error on Close after canceled CloseContext, got %v", err)
+	}
+	if got := counter.Load(); got != 1 {
+		t.Fatalf("expected 1 close after Close, got %d", got)
 	}
 }
