@@ -3,7 +3,9 @@ package kernel
 
 import (
 	"context"
+	"errors"
 	"io"
+	"sync/atomic"
 
 	"github.com/go-modkit/modkit/modkit/module"
 )
@@ -14,6 +16,8 @@ type App struct {
 	Graph       *Graph
 	container   *Container
 	Controllers map[string]any
+	closed      atomic.Bool
+	closing     atomic.Bool
 }
 
 func controllerKey(moduleName, controllerName string) string {
@@ -89,11 +93,38 @@ func (a *App) Closers() []io.Closer {
 
 // Close calls Close on all io.Closer providers in reverse build order.
 func (a *App) Close() error {
-	var firstErr error
+	return a.CloseContext(context.Background())
+}
+
+// CloseContext calls Close on all io.Closer providers in reverse build order,
+// stopping early if the context is canceled.
+func (a *App) CloseContext(ctx context.Context) error {
+	if a.closed.Load() {
+		return nil
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if !a.closing.CompareAndSwap(false, true) {
+		return nil
+	}
+	defer a.closing.Store(false)
+
+	var errs []error
 	for _, closer := range a.container.closersLIFO() {
-		if err := closer.Close(); err != nil && firstErr == nil {
-			firstErr = err
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := closer.Close(); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	return firstErr
+	if len(errs) == 0 {
+		a.closed.Store(true)
+		return nil
+	}
+	a.closed.Store(true)
+	return errors.Join(errs...)
 }
