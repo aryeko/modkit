@@ -44,6 +44,35 @@ func TestController_CreateUser_Validation(t *testing.T) {
 	}
 }
 
+func TestController_CreateUser_Validation_Whitespace(t *testing.T) {
+	svc := stubService{
+		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },
+		listFn:   func(ctx context.Context) ([]User, error) { return nil, nil },
+		updateFn: func(ctx context.Context, id int64, input UpdateUserInput) (User, error) { return User{}, nil },
+		deleteFn: func(ctx context.Context, id int64) error { return nil },
+	}
+
+	controller := NewController(svc)
+	router := modkithttp.NewRouter()
+	controller.RegisterRoutes(modkithttp.AsRouter(router))
+
+	body := []byte(`{"name":"   ","email":"ada@example.com"}`)
+	req := httptest.NewRequest(http.MethodPost, "/users", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", rec.Code)
+	}
+	var problem validation.ProblemDetails
+	if err := json.NewDecoder(rec.Body).Decode(&problem); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(problem.InvalidParams) != 1 || problem.InvalidParams[0].Name != "name" {
+		t.Fatalf("expected invalidParams to include name, got %+v", problem.InvalidParams)
+	}
+}
+
 func TestController_UpdateUser_Validation(t *testing.T) {
 	svc := stubService{
 		createFn: func(ctx context.Context, input CreateUserInput) (User, error) { return User{}, nil },

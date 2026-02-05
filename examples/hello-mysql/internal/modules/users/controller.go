@@ -80,14 +80,7 @@ func (c *Controller) handleCreateUser(w http.ResponseWriter, r *http.Request) {
 		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
-	if input.Name == "" || input.Email == "" {
-		var errs validation.ValidationErrors
-		if input.Name == "" {
-			errs.Add("name", "is required")
-		}
-		if input.Email == "" {
-			errs.Add("email", "is required")
-		}
+	if errs := input.Validate(); errs.HasErrors() {
 		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
@@ -147,14 +140,7 @@ func (c *Controller) handleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
-	if input.Name == "" || input.Email == "" {
-		var errs validation.ValidationErrors
-		if input.Name == "" {
-			errs.Add("name", "is required")
-		}
-		if input.Email == "" {
-			errs.Add("email", "is required")
-		}
+	if errs := input.Validate(); errs.HasErrors() {
 		validation.WriteProblemDetails(w, r, errs)
 		return
 	}
