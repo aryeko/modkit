@@ -176,27 +176,73 @@ Rules:
 
 ## Re-exporting Tokens
 
-You can re-export tokens from imported modules to create a public facade:
+A module can re-export tokens it can already access by listing them in its own `Exports`. This is useful for passing through shared dependencies or creating a public facade.
 
 ```go
-const TokenDB module.Token = "database.connection"
-const TokenUsersService module.Token = "users.service"
+import "fmt"
 
-type AppModule struct {
-    db    *DatabaseModule
-    users *UsersModule
+type UsersModule struct {
+    db *DatabaseModule
 }
 
-func (m *AppModule) Definition() module.ModuleDef {
+func NewUsersModule(db *DatabaseModule) *UsersModule {
+    return &UsersModule{db: db}
+}
+
+func (m *UsersModule) Definition() module.ModuleDef {
     return module.ModuleDef{
-        Name:    "app",
-        Imports: []module.Module{m.db, m.users},
-        Exports: []module.Token{TokenDB, TokenUsersService},
+        Name:    "users",
+        Imports: []module.Module{m.db},
+        Providers: []module.ProviderDef{{
+            Token: TokenUsersService,
+            Build: func(r module.Resolver) (any, error) {
+                dbAny, err := r.Get(TokenDB)
+                if err != nil {
+                    return nil, err
+                }
+                db, ok := dbAny.(*sql.DB)
+                if !ok {
+                    return nil, fmt.Errorf("expected *sql.DB for %q", TokenDB)
+                }
+                return NewUsersService(db), nil
+            },
+        }},
+        Exports: []module.Token{TokenUsersService, TokenDB},
     }
 }
 ```
 
-Visibility still applies: a module can only re-export tokens that are exported by its imports (or its own providers). Re-exporting does not bypass visibility rules.
+Re-exported tokens must be exported by the imported module (not just provided).
+
+### Invalid Re-export Errors
+
+Invalid re-export errors are raised when a module lists tokens in `Exports` that it cannot safely re-export from its imports.
+
+**Exporting a token that an import does not export**
+
+```go
+reexporter := mod("Reexporter", []module.Module{imported}, nil, nil, []module.Token{token})
+```
+
+Expected error:
+
+```
+export not visible: module="Reexporter" token="private.token"
+```
+
+**Ambiguous re-export from multiple imports**
+
+```go
+reexporter := mod("Reexporter", []module.Module{left, right}, nil, nil, []module.Token{token})
+```
+
+Expected error:
+
+```
+export token "shared.token" in module "Reexporter" is exported by multiple imports: [Left Right]
+```
+
+Fix: ensure the module imports the provider's module and that module exports the token, or export the token from only one import to remove ambiguity.
 
 ## Common Patterns
 
