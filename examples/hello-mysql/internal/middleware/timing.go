@@ -20,10 +20,8 @@ func NewTiming(logger modkitlogging.Logger) func(http.Handler) http.Handler {
 
 			next.ServeHTTP(ww, r)
 
-			logger.Info("request timing",
-				"method", r.Method,
-				"path", r.URL.Path,
-				"status", ww.Status(),
+			logger.Info("http.request.duration",
+				"metric", "http.request.duration",
 				"duration", time.Since(start),
 			)
 		})

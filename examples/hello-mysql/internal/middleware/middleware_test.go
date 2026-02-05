@@ -113,8 +113,8 @@ func TestTiming_LogsDuration(t *testing.T) {
 	if len(logger.infoMessages) != 1 {
 		t.Fatalf("expected 1 info log, got %d", len(logger.infoMessages))
 	}
-	if logger.infoMessages[0] != "request timing" {
-		t.Fatalf("expected log message %q, got %q", "request timing", logger.infoMessages[0])
+	if logger.infoMessages[0] != "http.request.duration" {
+		t.Fatalf("expected log message %q, got %q", "http.request.duration", logger.infoMessages[0])
 	}
 
 	args := logger.infoArgs[0]
@@ -127,14 +127,11 @@ func TestTiming_LogsDuration(t *testing.T) {
 		attributes[key] = args[i+1]
 	}
 
-	if attributes["method"] != http.MethodGet {
-		t.Fatalf("expected method %q, got %v", http.MethodGet, attributes["method"])
+	if len(attributes) != 2 {
+		t.Fatalf("expected 2 attributes, got %d", len(attributes))
 	}
-	if attributes["path"] != "/api/v1/health" {
-		t.Fatalf("expected path %q, got %v", "/api/v1/health", attributes["path"])
-	}
-	if attributes["status"] != http.StatusCreated {
-		t.Fatalf("expected status %d, got %v", http.StatusCreated, attributes["status"])
+	if attributes["metric"] != "http.request.duration" {
+		t.Fatalf("expected metric %q, got %v", "http.request.duration", attributes["metric"])
 	}
 	duration, ok := attributes["duration"].(time.Duration)
 	if !ok {
