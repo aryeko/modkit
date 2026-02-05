@@ -54,7 +54,6 @@ func main() {
 		errCh <- server.ListenAndServe()
 	}()
 
-<<<<<<< HEAD
 	hooks := buildShutdownHooks(boot)
 	if err := runServer(modkithttp.ShutdownTimeout, server, sigCh, errCh, hooks); err != nil {
 		log.Fatalf("server failed: %v", err)
