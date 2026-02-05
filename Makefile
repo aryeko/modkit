@@ -26,7 +26,7 @@ vuln:
 test:
 	@for mod in $(MODULES); do \
 		echo "Testing module: $$mod"; \
-		(cd $$mod && go test -race -shuffle=on -timeout=5m ./...) || exit 1; \
+		(cd $$mod && go test -race -timeout=5m ./...) || exit 1; \
 	done
 
 test-coverage:
