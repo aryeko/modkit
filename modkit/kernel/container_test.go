@@ -3,6 +3,7 @@ package kernel_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -433,6 +434,49 @@ func TestAppCloseReverseOrder(t *testing.T) {
 
 	if len(closed) != 2 || closed[0] != "b" || closed[1] != "a" {
 		t.Fatalf("expected reverse close order, got %v", closed)
+	}
+}
+
+func TestAppCloseOrderWithDependencies(t *testing.T) {
+	var closed []string
+
+	modA := mod("A", nil,
+		[]module.ProviderDef{{
+			Token: "closer.a",
+			Build: func(r module.Resolver) (any, error) {
+				return &recordingCloser{name: "a", closed: &closed}, nil
+			},
+		}, {
+			Token: "closer.b",
+			Build: func(r module.Resolver) (any, error) {
+				_, _ = r.Get("closer.a")
+				return &recordingCloser{name: "b", closed: &closed}, nil
+			},
+		}, {
+			Token: "closer.c",
+			Build: func(r module.Resolver) (any, error) {
+				_, _ = r.Get("closer.b")
+				return &recordingCloser{name: "c", closed: &closed}, nil
+			},
+		}},
+		nil,
+		nil,
+	)
+
+	app, err := kernel.Bootstrap(modA)
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+
+	_, _ = app.Get("closer.c")
+
+	if err := app.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+
+	want := []string{"c", "b", "a"}
+	if !reflect.DeepEqual(closed, want) {
+		t.Fatalf("expected %v, got %v", want, closed)
 	}
 }
 
