@@ -449,13 +449,17 @@ func TestAppCloseOrderWithDependencies(t *testing.T) {
 		}, {
 			Token: "closer.b",
 			Build: func(r module.Resolver) (any, error) {
-				_, _ = r.Get("closer.a")
+				if _, err := r.Get("closer.a"); err != nil {
+					return nil, err
+				}
 				return &recordingCloser{name: "b", closed: &closed}, nil
 			},
 		}, {
 			Token: "closer.c",
 			Build: func(r module.Resolver) (any, error) {
-				_, _ = r.Get("closer.b")
+				if _, err := r.Get("closer.b"); err != nil {
+					return nil, err
+				}
 				return &recordingCloser{name: "c", closed: &closed}, nil
 			},
 		}},
