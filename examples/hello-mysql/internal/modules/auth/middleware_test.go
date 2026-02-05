@@ -73,3 +73,26 @@ func TestJWTMiddleware(t *testing.T) {
 		})
 	}
 }
+
+func TestBearerToken_CaseInsensitive(t *testing.T) {
+	got := bearerToken("bearer abc")
+	if got != "abc" {
+		t.Fatalf("token = %q", got)
+	}
+}
+
+func TestJWTMiddleware_WWWAuthenticateOnMissingToken(t *testing.T) {
+	mw := NewJWTMiddleware(Config{Secret: "secret", Issuer: "issuer"})
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	if got := rec.Header().Get("WWW-Authenticate"); got != "Bearer" {
+		t.Fatalf("WWW-Authenticate = %q", got)
+	}
+}
