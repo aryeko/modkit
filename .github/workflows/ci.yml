@@ -59,11 +59,21 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
-          cache: true
-          # Cache based on all go.sum files in the workspace
-          cache-dependency-path: |
-            **/go.sum
-            go.work.sum
+          # Disable setup-go's cache; we use a custom cache below
+          cache: false
+
+      - name: Cache Go Modules and Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          # Key based on all go.sum files (app + examples dependencies)
+          # This ensures tests use cached modules when dependencies haven't changed
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum', 'go.work.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: Test with coverage
         run: make test-coverage
       - name: Upload coverage to Codecov
