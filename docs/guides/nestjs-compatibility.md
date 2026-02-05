@@ -45,3 +45,266 @@ This guide maps NestJS concepts to modkit equivalents (or intentional difference
 |  | Microservices | ❌ Not planned | Out of scope |
 |  | WebSockets | ❌ Not planned | Use gorilla/websocket directly |
 |  | GraphQL | ❌ Not planned | Use gqlgen directly |
+
+## Justifications and Alternatives
+
+### Global Modules
+
+**NestJS:** The `@Global()` decorator makes a module's exports available everywhere without explicit imports.
+
+**modkit:** Skipped.
+
+**Justification:** Global modules hide dependencies and weaken module boundaries. In Go, dependencies are explicit at the package and module level, which keeps systems easier to reason about.
+
+**Alternative:** Construct a shared module once and import it explicitly where needed.
+
+```go
+configModule := NewConfigModule()
+
+usersModule := NewUsersModule(configModule)
+ordersModule := NewOrdersModule(configModule)
+```
+
+### Dynamic Modules
+
+**NestJS:** `DynamicModule` lets you compute providers/exports at runtime via `register()` methods.
+
+**modkit:** Different.
+
+**Justification:** Go favors explicit constructors over runtime decorators. Constructor functions are testable, type-safe, and keep configuration visible.
+
+**Alternative:** Use a constructor function that returns a module configured with options.
+
+```go
+type CacheOptions struct {
+    TTL time.Duration
+}
+
+func NewCacheModule(opts CacheOptions) module.Module {
+    return &CacheModule{opts: opts}
+}
+```
+
+### Request Scope
+
+**NestJS:** Providers can be request-scoped so each HTTP request gets its own instance.
+
+**modkit:** Skipped.
+
+**Justification:** Go already has explicit request scoping via `context.Context`. Request data should flow through context, not DI containers.
+
+**Alternative:** Store per-request values in context and read them in handlers or middleware.
+
+```go
+type ctxKey string
+
+func withRequestID(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        ctx := context.WithValue(r.Context(), ctxKey("request_id"), uuid.NewString())
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+```
+
+### Transient Scope
+
+**NestJS:** Transient providers create a new instance every time they are injected.
+
+**modkit:** Skipped.
+
+**Justification:** Go code can construct short-lived values directly, which is simpler and more transparent than a container-managed transient scope.
+
+**Alternative:** Use factory functions where you need a fresh instance.
+
+```go
+func NewValidator() *Validator {
+    return &Validator{now: time.Now}
+}
+
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    v := NewValidator()
+    v.Validate(r)
+}
+```
+
+### useExisting
+
+**NestJS:** `useExisting` creates an alias to another provider token.
+
+**modkit:** Skipped.
+
+**Justification:** Explicit wiring is clearer than hidden aliases. In Go, you can return the existing dependency directly.
+
+**Alternative:** Use a `Build` function that fetches and returns the existing provider.
+
+```go
+module.Provider{
+    Token: "users.reader",
+    Build: func(r module.Resolver) (any, error) {
+        v, err := r.Get("users.service")
+        if err != nil {
+            return nil, err
+        }
+        return v, nil
+    },
+}
+```
+
+### Async Providers
+
+**NestJS:** Providers can be async via `useFactory` returning a promise.
+
+**modkit:** Different.
+
+**Justification:** Go initialization is synchronous. If you need concurrency, you launch goroutines explicitly and return when ready.
+
+**Alternative:** Start background work in a goroutine and return a ready object.
+
+```go
+type Cache struct {
+    ready chan struct{}
+}
+
+func NewCache() *Cache {
+    c := &Cache{ready: make(chan struct{})}
+    go func() {
+        // warm cache
+        close(c.ready)
+    }()
+    return c
+}
+```
+
+### Lifecycle Hooks
+
+**NestJS:** Multiple lifecycle hooks (`onModuleInit`, `onApplicationBootstrap`, `onModuleDestroy`, etc.).
+
+**modkit:** Different.
+
+**Justification:** Go favors explicit initialization and cleanup via constructors and `io.Closer`. Signal handling is a standard library concern.
+
+**Alternative:** Put startup in `Build` and cleanup in `Close`, and wire shutdown with `signal.NotifyContext`.
+
+```go
+type DB struct{ *sql.DB }
+
+func (d *DB) Close() error { return d.DB.Close() }
+
+ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+go func() {
+    <-ctx.Done()
+    app.Close()
+}()
+```
+
+### Route Decorators
+
+**NestJS:** Decorators like `@Get()` and `@Post()` declare routes on controllers.
+
+**modkit:** Different.
+
+**Justification:** Go avoids decorators and reflection. Explicit route registration keeps handlers discoverable and testable.
+
+**Alternative:** Implement `RegisterRoutes` and call `Handle` directly.
+
+```go
+func (c *UsersController) RegisterRoutes(r http.Router) {
+    r.Handle("GET", "/users", c.List)
+    r.Handle("POST", "/users", c.Create)
+}
+```
+
+### Guards, Interceptors, Pipes, Exception Filters
+
+**NestJS:** Cross-cutting concerns implemented via framework-specific abstractions.
+
+**modkit:** Different.
+
+**Justification:** Go uses standard middleware chains. This keeps behavior explicit and composable without framework-specific layers.
+
+**Alternative:** Compose middleware for auth, validation, and error handling.
+
+```go
+router := http.NewRouter()
+router.Use(RequireAuth)
+router.Use(ValidateJSON)
+router.Use(RecoverErrors)
+```
+
+### CLI Scaffolding
+
+**NestJS:** CLI generates projects, modules, and scaffolding.
+
+**modkit:** Not planned.
+
+**Justification:** Go projects are small and convention-driven. Standard tooling already covers init, formatting, and generation.
+
+**Alternative:** Use Go tooling and Makefiles for common workflows.
+
+```go
+//go:generate go run ./internal/tools/wire
+```
+
+### Devtools
+
+**NestJS:** Framework-specific devtools for inspection and hot reload.
+
+**modkit:** Not planned.
+
+**Justification:** Go has a rich ecosystem for profiling and debugging that works across frameworks.
+
+**Alternative:** Use standard tooling like `pprof` and `delve`.
+
+```go
+import _ "net/http/pprof"
+
+go http.ListenAndServe("localhost:6060", nil)
+```
+
+### Microservices
+
+**NestJS:** Built-in microservices package with transport abstractions.
+
+**modkit:** Not planned.
+
+**Justification:** Go already has strong, explicit libraries for RPC and messaging. Keeping it out of modkit avoids locking users into one transport.
+
+**Alternative:** Use gRPC or NATS directly.
+
+```go
+grpcServer := grpc.NewServer()
+pb.RegisterUsersServer(grpcServer, usersSvc)
+```
+
+### WebSockets
+
+**NestJS:** WebSocket gateway abstraction.
+
+**modkit:** Not planned.
+
+**Justification:** Go's ecosystem already provides stable WebSocket libraries with explicit control.
+
+**Alternative:** Use `gorilla/websocket` directly.
+
+```go
+upgrader := websocket.Upgrader{}
+conn, _ := upgrader.Upgrade(w, r, nil)
+defer conn.Close()
+```
+
+### GraphQL
+
+**NestJS:** GraphQL module and decorators.
+
+**modkit:** Not planned.
+
+**Justification:** Go GraphQL stacks are best served by specialized libraries with code generation.
+
+**Alternative:** Use `gqlgen` and mount the handler in a controller.
+
+```go
+srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: r}))
+router.Handle("POST", "/graphql", srv)
+```
