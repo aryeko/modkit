@@ -413,3 +413,21 @@ func TestNewModule_DefaultNamesAvoidCollisions(t *testing.T) {
 		t.Fatalf("unexpected controller value: %v", got)
 	}
 }
+
+func TestWithModuleName_UsesExplicitName(t *testing.T) {
+	const token module.Token = "config.named"
+
+	cfgModule := config.NewModule(
+		config.WithModuleName("custom.config.module"),
+		config.WithSource(mapSource{"NAMED": "value"}),
+		config.WithTyped(token, config.ValueSpec[string]{
+			Key:      "NAMED",
+			Required: true,
+			Parse:    config.ParseString,
+		}, true),
+	)
+
+	if got := cfgModule.Definition().Name; got != "custom.config.module" {
+		t.Fatalf("unexpected module name: %q", got)
+	}
+}
