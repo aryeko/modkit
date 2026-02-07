@@ -2,8 +2,10 @@ package users
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
@@ -99,6 +101,35 @@ func TestUsersModule_ControllerBuildErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+
+	t.Run("type mismatch service", func(t *testing.T) {
+		_, err := controller.Build(stubResolver{
+			values: map[module.Token]any{
+				TokenService: "wrong type",
+			},
+		})
+		if err == nil {
+			t.Fatal("expected error for type mismatch")
+		}
+		if !strings.Contains(err.Error(), "expected users.Service") {
+			t.Fatalf("unexpected error message: %v", err)
+		}
+	})
+
+	t.Run("type mismatch middleware", func(t *testing.T) {
+		_, err := controller.Build(stubResolver{
+			values: map[module.Token]any{
+				TokenService:         serviceStub{},
+				auth.TokenMiddleware: "wrong type",
+			},
+		})
+		if err == nil {
+			t.Fatal("expected error for type mismatch")
+		}
+		if !strings.Contains(err.Error(), "expected func(http.Handler) http.Handler") {
+			t.Fatalf("unexpected error message: %v", err)
+		}
+	})
 }
 
 func TestUsersModule_RepositoryBuildError(t *testing.T) {
@@ -135,4 +166,33 @@ func TestUsersModule_ServiceBuildError(t *testing.T) {
 	if err.Error() != "repository not found" {
 		t.Fatalf("expected 'repository not found' error, got %q", err.Error())
 	}
+}
+
+func TestUsersModule_ProviderBuildSuccess(t *testing.T) {
+	mod := NewModule(Options{Database: &database.Module{}, Auth: auth.NewModule(auth.Options{})})
+	def := mod.(*Module).Definition()
+
+	t.Run("repository success", func(t *testing.T) {
+		provider := def.Providers[0]
+		_, err := provider.Build(stubResolver{
+			values: map[module.Token]any{
+				database.TokenDB: &sql.DB{},
+			},
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("service success", func(t *testing.T) {
+		provider := def.Providers[1]
+		_, err := provider.Build(stubResolver{
+			values: map[module.Token]any{
+				TokenRepository: &mysqlRepo{},
+			},
+		})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 }
