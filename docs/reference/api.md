@@ -105,11 +105,7 @@ Type-safe wrapper around `Resolver.Get`. Returns an error if resolution fails or
 func (a *App) Get(token Token) (any, error)
 ```
 
-Resolves a token from the root module scope. Note: `module.Get[T]` works with `App` as well, as `App` implements a `Get` method compatible with the resolver pattern (though it returns the App struct itself which has a Get method).
-
-Wait, `module.Get[T]` takes a `Resolver` interface. `App` has a `Get` method, so it implicitly satisfies `Resolver`.
-
-Let's check `App` struct in `modkit/kernel/container.go`.
+Resolves a token from the root module scope. Note that `module.Get[T]` can be used with an `App` instance because `App` implements the `Resolver` interface.
 
 ### App.Resolver
 
@@ -245,14 +241,20 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Providers: []module.ProviderDef{{
             Token: "users.service",
             Build: func(r module.Resolver) (any, error) {
-                db, _ := module.Get[*sql.DB](r, "db.connection")
+                db, err := module.Get[*sql.DB](r, "db.connection")
+                if err != nil {
+                    return nil, err
+                }
                 return NewUsersService(db), nil
             },
         }},
         Controllers: []module.ControllerDef{{
             Name: "UsersController",
             Build: func(r module.Resolver) (any, error) {
-                svc, _ := module.Get[UsersService](r, "users.service")
+                svc, err := module.Get[UsersService](r, "users.service")
+                if err != nil {
+                    return nil, err
+                }
                 return NewUsersController(svc), nil
             },
         }},

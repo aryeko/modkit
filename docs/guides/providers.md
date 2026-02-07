@@ -181,7 +181,10 @@ type MySQLUserRepository struct {
 
 // Provider returns interface type
 Build: func(r module.Resolver) (any, error) {
-    db, _ := module.Get[*sql.DB](r, TokenDB)
+    db, err := module.Get[*sql.DB](r, TokenDB)
+    if err != nil {
+        return nil, err
+    }
     return &MySQLUserRepository{db: db}, nil
 }
 ```
@@ -192,13 +195,16 @@ For providers that need cleanup (database connections, file handles), handle shu
 
 ```go
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // ... run server ...
     
     // Cleanup on shutdown
-    if db, err := app.Get("db.connection"); err == nil {
-        db.(*sql.DB).Close()
+    if db, err := module.Get[*sql.DB](app, "db.connection"); err == nil {
+        db.Close()
     }
 }
 ```

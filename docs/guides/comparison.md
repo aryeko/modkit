@@ -84,7 +84,10 @@ func main() {
 
 ```go
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     router := mkhttp.NewRouter()
     mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
     mkhttp.Serve(":8080", router)
@@ -126,8 +129,14 @@ svc := do.MustInvoke[UserService](injector)
 ### modkit Approach
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
-svc, _ := module.Get[UserService](app, "users.service")
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
+svc, err := module.Get[UserService](app, "users.service")
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ### Key Differences
@@ -174,7 +183,10 @@ func main() {
     usersModule := users.NewModule(dbModule)
     appModule := app.NewModule(usersModule)
     
-    app, _ := kernel.Bootstrap(appModule)
+    app, err := kernel.Bootstrap(appModule)
+    if err != nil {
+        log.Fatal(err)
+    }
     router := mkhttp.NewRouter()
     mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
     mkhttp.Serve(":8080", router)

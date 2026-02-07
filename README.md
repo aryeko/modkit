@@ -51,7 +51,10 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Controllers: []module.ControllerDef{{
             Name: "UsersController",
             Build: func(r module.Resolver) (any, error) {
-                svc, _ := module.Get[UsersService](r, "users.service")
+                svc, err := module.Get[UsersService](r, "users.service")
+                if err != nil {
+                    return nil, err
+                }
                 return NewUsersController(svc), nil
             },
         }},
@@ -61,7 +64,10 @@ func (m *UsersModule) Definition() module.ModuleDef {
 
 // Bootstrap and serve
 func main() {
-    app, _ := kernel.Bootstrap(&UsersModule{})
+    app, err := kernel.Bootstrap(&UsersModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     router := mkhttp.NewRouter()
     mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
     mkhttp.Serve(":8080", router)

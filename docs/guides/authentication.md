@@ -220,9 +220,15 @@ func (m *AuthModule) Definition() module.ModuleDef {
 Usage at startup:
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
-authMW, _ := module.Get[func(http.Handler) http.Handler](app, "auth.middleware")
+authMW, err := module.Get[func(http.Handler) http.Handler](app, "auth.middleware")
+if err != nil {
+    log.Fatal(err)
+}
 router.Use(authMW)
 ```
 

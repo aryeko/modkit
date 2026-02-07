@@ -83,7 +83,7 @@ To add a "Users" feature, a developer:
 1.  Creates a `users` package.
 2.  Defines a `UsersModule` struct.
 3.  Implements `UsersService` (business logic) and `UsersController` (HTTP).
-4.   wires them in `Definition()`:
+4.  Wires them in `Definition()`:
     *   `Providers`: `Use(NewUsersService)`
     *   `Controllers`: `Use(NewUsersController)`
     *   `Exports`: `Export("users.service")` if other modules need it.
@@ -111,6 +111,7 @@ Errors should be:
 *   [x] Visibility enforcement
 *   [x] Basic HTTP adapter (Chi)
 *   [x] Lifecycle hooks (OnStart/OnStop)
+*   [x] Generic Helpers: Reduce type-casting noise with `module.Get[T]` helper.
 
 ### Phase 2: Ecosystem & Tooling (Next)
 *   [ ] **modkit-cli**: Scaffold new projects, modules, and providers (`modkit new module users`).
@@ -120,7 +121,6 @@ Errors should be:
 ### Phase 3: Advanced Features
 *   [ ] **Graph Visualization**: Dump the dependency graph to Mermaid/Dot format.
 *   [ ] **Devtools**: A debug endpoint to inspect running modules and provider states.
-*   [ ] **Generic Helpers**: Reduce type-casting noise with Go 1.18+ generics wrapper.
 
 ## 8. Success Metrics
 

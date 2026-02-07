@@ -48,10 +48,16 @@ Modules must be passed as pointers to ensure stable identity across shared impor
 
 ```go
 // Correct: pass pointer
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
 // Wrong: value type loses identity
-app, _ := kernel.Bootstrap(AppModule{})  // rejected
+app, err = kernel.Bootstrap(AppModule{})  // rejected
+if err != nil {
+    // handle error
+}
 ```
 
 If two modules import the same dependency, they must share the same pointer:
@@ -285,14 +291,20 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Providers: []module.ProviderDef{{
             Token: TokenUsersService,
             Build: func(r module.Resolver) (any, error) {
-                db, _ := module.Get[*sql.DB](r, TokenDB)
+                db, err := module.Get[*sql.DB](r, TokenDB)
+                if err != nil {
+                    return nil, err
+                }
                 return NewUsersService(db), nil
             },
         }},
         Controllers: []module.ControllerDef{{
             Name: "UsersController",
             Build: func(r module.Resolver) (any, error) {
-                svc, _ := module.Get[UsersService](r, TokenUsersService)
+                svc, err := module.Get[UsersService](r, TokenUsersService)
+                if err != nil {
+                    return nil, err
+                }
                 return NewUsersController(svc), nil
             },
         }},
@@ -353,7 +365,10 @@ func main() {
         orders: orders,
     }
     
-    appInstance, _ := kernel.Bootstrap(app)
+    app, err := kernel.Bootstrap(app)
+    if err != nil {
+        log.Fatal(err)
+    }
     // ...
 }
 ```

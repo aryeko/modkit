@@ -11,7 +11,7 @@ func Get[T any](r Resolver, token Token) (T, error) {
 	var zero T
 	val, err := r.Get(token)
 	if err != nil {
-		return zero, err
+		return zero, fmt.Errorf("Get[%T]: %w", zero, err)
 	}
 
 	typed, ok := val.(T)

@@ -1,3 +1,4 @@
+// Package main provides entry point tests for the hello-simple example.
 package main
 
 import (
@@ -9,15 +10,18 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// MockResolver is a mock implementation of module.Resolver for testing.
 type MockResolver struct {
 	mock.Mock
 }
 
+// Get implements module.Resolver.
 func (m *MockResolver) Get(token module.Token) (any, error) {
 	args := m.Called(token)
 	return args.Get(0), args.Error(1)
 }
 
+// TestAppModule_Definition tests the AppModule definition metadata.
 func TestAppModule_Definition(t *testing.T) {
 	m := NewAppModule("test message")
 	def := m.Definition()

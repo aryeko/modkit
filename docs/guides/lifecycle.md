@@ -119,7 +119,10 @@ Once built, providers are cached as singletons:
 svc, err := module.Get[UserService](r, "users.service")
 
 // Second call: returns cached instance
-svc2, _ := module.Get[UserService](r, "users.service")
+svc2, err := module.Get[UserService](r, "users.service")
+if err != nil {
+    return nil, err
+}
 
 // svc and svc2 are the same instance
 fmt.Println(svc == svc2)  // true
@@ -189,7 +192,10 @@ func main() {
     }
     
     // Get resources that need cleanup
-    db, _ := module.Get[*sql.DB](app, "db.connection")
+    db, err := module.Get[*sql.DB](app, "db.connection")
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // Defer cleanup
     defer db.Close()
@@ -234,7 +240,10 @@ func (c *Cleanup) Run() error {
     return &Cleanup{}, nil
 }},
 {Token: "db", Build: func(r module.Resolver) (any, error) {
-    cleanup, _ := module.Get[*Cleanup](r, "cleanup")
+    cleanup, err := module.Get[*Cleanup](r, "cleanup")
+    if err != nil {
+        return nil, err
+    }
     
     db, err := sql.Open("mysql", dsn)
     if err != nil {
@@ -247,8 +256,14 @@ func (c *Cleanup) Run() error {
 
 // In main
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
-    cleanup, _ := module.Get[*Cleanup](app, "cleanup")
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    cleanup, err := module.Get[*Cleanup](app, "cleanup")
+    if err != nil {
+        log.Fatal(err)
+    }
     defer cleanup.Run()
     // ...
 }
@@ -433,10 +448,16 @@ func (m *DatabaseModule) Definition() module.ModuleDef {
 }
 
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // Get DB for cleanup
-    db, _ := module.Get[*sql.DB](app, "db.connection")
+    db, err := module.Get[*sql.DB](app, "db.connection")
+    if err != nil {
+        log.Fatal(err)
+    }
     defer db.Close()
     
     // Start server (DB connection created on first query)

@@ -272,7 +272,10 @@ func (m *AppModule) Definition() module.ModuleDef {
             {
                 Token: "middleware.auth",
                 Build: func(r module.Resolver) (any, error) {
-                    userSvc, _ := module.Get[UserService](r, TokenUserService)
+                    userSvc, err := module.Get[UserService](r, TokenUserService)
+                    if err != nil {
+                        return nil, err
+                    }
                     return AuthMiddleware(userSvc.ValidateToken), nil
                 },
             },
@@ -284,9 +287,15 @@ func (m *AppModule) Definition() module.ModuleDef {
 Then retrieve and apply in your startup code:
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
-authMW, _ := module.Get[func(http.Handler) http.Handler](app, "middleware.auth")
+authMW, err := module.Get[func(http.Handler) http.Handler](app, "middleware.auth")
+if err != nil {
+    log.Fatal(err)
+}
 router.Use(authMW)
 ```
 

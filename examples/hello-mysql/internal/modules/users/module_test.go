@@ -1,3 +1,4 @@
+// Package users provides the users domain module.
 package users
 
 import (
@@ -13,6 +14,7 @@ import (
 	"github.com/go-modkit/modkit/modkit/module"
 )
 
+// TestUsersModule_Definition_WiresAuth tests that the users module correctly declares its dependencies.
 func TestUsersModule_Definition_WiresAuth(t *testing.T) {
 	mod := NewModule(Options{Database: &database.Module{}, Auth: auth.NewModule(auth.Options{})})
 	def := mod.(*Module).Definition()
@@ -145,7 +147,7 @@ func TestUsersModule_RepositoryBuildError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for missing database")
 	}
-	if err.Error() != "database connection failed" {
+	if !strings.Contains(err.Error(), "database connection failed") {
 		t.Fatalf("expected 'database connection failed' error, got %q", err.Error())
 	}
 }
@@ -163,7 +165,7 @@ func TestUsersModule_ServiceBuildError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for missing repository")
 	}
-	if err.Error() != "repository not found" {
+	if !strings.Contains(err.Error(), "repository not found") {
 		t.Fatalf("expected 'repository not found' error, got %q", err.Error())
 	}
 }
