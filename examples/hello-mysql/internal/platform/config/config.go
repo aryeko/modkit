@@ -28,9 +28,15 @@ func Load() Config {
 }
 
 func envOrDefault(key, def string) string {
-	val := strings.TrimSpace(os.Getenv(key))
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return def
+	}
+
+	val = strings.TrimSpace(val)
 	if val == "" {
 		return def
 	}
+
 	return val
 }
