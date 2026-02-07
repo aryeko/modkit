@@ -10,14 +10,12 @@ import (
 	"time"
 
 	_ "github.com/go-modkit/modkit/examples/hello-mysql/docs"
-	mwconfig "github.com/go-modkit/modkit/examples/hello-mysql/internal/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/httpserver"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/lifecycle"
-	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/app"
-	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/auth"
-	platformconfig "github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/config"
+	configmodule "github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/config"
 	"github.com/go-modkit/modkit/examples/hello-mysql/internal/platform/logging"
 	modkithttp "github.com/go-modkit/modkit/modkit/http"
+	"github.com/go-modkit/modkit/modkit/module"
 )
 
 // @title hello-mysql API
@@ -25,20 +23,21 @@ import (
 // @description Example modkit service with MySQL.
 // @BasePath /api/v1
 func main() {
-	cfg := platformconfig.Load()
-	mwCfg := mwconfig.Load()
-	jwtTTL := parseJWTTTL(cfg.JWTTTL)
-
-	boot, handler, err := httpserver.BuildAppHandler(buildAppOptions(cfg, mwCfg, jwtTTL))
+	boot, handler, err := httpserver.BuildAppHandler()
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
 
+	addr, err := module.Get[string](boot, configmodule.TokenHTTPAddr)
+	if err != nil {
+		log.Fatalf("config load failed: %v", err)
+	}
+
 	logger := logging.New()
-	logStartup(logger, cfg.HTTPAddr)
+	logStartup(logger, addr)
 
 	server := &http.Server{
-		Addr:    cfg.HTTPAddr,
+		Addr:    addr,
 		Handler: handler,
 	}
 
@@ -58,42 +57,6 @@ func main() {
 	if err := runServer(modkithttp.ShutdownTimeout, server, sigCh, errCh, hooks); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
-}
-
-func buildAppOptions(cfg platformconfig.Config, mwCfg mwconfig.Config, jwtTTL time.Duration) app.Options {
-	return app.Options{
-		HTTPAddr:           cfg.HTTPAddr,
-		MySQLDSN:           cfg.MySQLDSN,
-		Auth:               buildAuthConfig(cfg, jwtTTL),
-		CORSAllowedOrigins: mwCfg.CORSAllowedOrigins,
-		CORSAllowedMethods: mwCfg.CORSAllowedMethods,
-		CORSAllowedHeaders: mwCfg.CORSAllowedHeaders,
-		RateLimitPerSecond: mwCfg.RateLimitPerSecond,
-		RateLimitBurst:     mwCfg.RateLimitBurst,
-	}
-}
-
-func buildAuthConfig(cfg platformconfig.Config, jwtTTL time.Duration) auth.Config {
-	return auth.Config{
-		Secret:   cfg.JWTSecret,
-		Issuer:   cfg.JWTIssuer,
-		TTL:      jwtTTL,
-		Username: cfg.AuthUsername,
-		Password: cfg.AuthPassword,
-	}
-}
-
-func parseJWTTTL(raw string) time.Duration {
-	ttl, err := time.ParseDuration(raw)
-	if err != nil {
-		log.Printf("invalid JWT_TTL %q, using 1h: %v", raw, err)
-		return time.Hour
-	}
-	if ttl <= 0 {
-		log.Printf("invalid JWT_TTL %q, using 1h: non-positive duration", raw)
-		return time.Hour
-	}
-	return ttl
 }
 
 type shutdownServer interface {

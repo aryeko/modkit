@@ -7,6 +7,7 @@ This is a quick reference for modkit's core types. For full documentation, see [
 | Package | Import | Purpose |
 |---------|--------|---------|
 | `module` | `github.com/go-modkit/modkit/modkit/module` | Module metadata types |
+| `config` | `github.com/go-modkit/modkit/modkit/config` | Typed config loading helpers |
 | `kernel` | `github.com/go-modkit/modkit/modkit/kernel` | Graph builder, bootstrap |
 | `http` | `github.com/go-modkit/modkit/modkit/http` | HTTP adapter |
 | `logging` | `github.com/go-modkit/modkit/modkit/logging` | Logging interface |

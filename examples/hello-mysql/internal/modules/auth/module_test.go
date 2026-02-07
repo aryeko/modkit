@@ -3,8 +3,8 @@ package auth
 import (
 	"errors"
 	"testing"
-	"time"
 
+	"github.com/go-modkit/modkit/examples/hello-mysql/internal/modules/database"
 	"github.com/go-modkit/modkit/modkit/kernel"
 	"github.com/go-modkit/modkit/modkit/module"
 )
@@ -18,8 +18,7 @@ func TestModule_Bootstrap(t *testing.T) {
 }
 
 func TestAuthModule_Definition(t *testing.T) {
-	cfg := Config{Secret: "secret", Issuer: "issuer", TTL: time.Minute}
-	def := NewModule(Options{Config: cfg}).(*Module).Definition()
+	def := NewModule(Options{}).(*Module).Definition()
 
 	if def.Name != "auth" {
 		t.Fatalf("name = %q", def.Name)
@@ -42,8 +41,7 @@ func (r errorResolver) Get(token module.Token) (any, error) {
 }
 
 func TestAuthModule_ControllerBuildError(t *testing.T) {
-	cfg := Config{Secret: "secret", Issuer: "issuer", TTL: time.Minute}
-	def := NewModule(Options{Config: cfg}).(*Module).Definition()
+	def := NewModule(Options{}).(*Module).Definition()
 
 	_, err := def.Controllers[0].Build(errorResolver{
 		token: TokenHandler,
@@ -51,5 +49,27 @@ func TestAuthModule_ControllerBuildError(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+type rootModule struct {
+	imports []module.Module
+}
+
+func (m *rootModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:    "root",
+		Imports: m.imports,
+	}
+}
+
+func TestAuthAndDatabase_DefaultConfigComposition(t *testing.T) {
+	root := &rootModule{imports: []module.Module{
+		NewModule(Options{}),
+		database.NewModule(database.Options{}),
+	}}
+
+	if _, err := kernel.Bootstrap(root); err != nil {
+		t.Fatalf("bootstrap failed: %v", err)
 	}
 }
