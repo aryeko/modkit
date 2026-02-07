@@ -67,8 +67,10 @@ High-signal packages by density:
 - If `.github/pull_request_template.md` exists, PR descriptions must follow that template structure.
 - Template checklist must be actively reconciled (checked/unchecked/N/A with reason) before review request.
 - A checklist box may be checked only when same-session verification evidence exists.
-- Before PR create/update, run `make fmt && make lint && make test` (or documented project equivalent) and reflect outcomes in the checklist.
+- Before PR create/update, run `make fmt && make lint && make vuln && make test && make test-coverage` (or documented project equivalent) and reflect outcomes in the checklist.
 - If a check is not run, leave it unchecked or mark N/A with an explicit reason.
+- Keep checklist evidence aligned with CI gates for Go `1.25.7` (lint, vuln, coverage, and tests).
+- If `make vuln` or `make test-coverage` is not run or fails, leave corresponding checklist items unchecked (or mark N/A with explicit reason).
 - After any new commit on the PR branch, rerun affected checks and re-reconcile the checklist.
 
 ## COMMANDS
