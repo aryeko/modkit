@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestLoad_Defaults(t *testing.T) {
 	t.Setenv("HTTP_ADDR", "")
@@ -24,6 +27,25 @@ func TestLoad_Defaults(t *testing.T) {
 func TestEnvOrDefault_TrimsSpace(t *testing.T) {
 	t.Setenv("JWT_ISSUER", "   ")
 	if got := envOrDefault("JWT_ISSUER", "hello-mysql"); got != "hello-mysql" {
+		t.Fatalf("envOrDefault = %q", got)
+	}
+}
+
+func TestEnvOrDefault_UsesDefaultWhenUnset(t *testing.T) {
+	const key = "JWT_ISSUER_UNSET"
+	if err := os.Unsetenv(key); err != nil {
+		t.Fatalf("Unsetenv failed: %v", err)
+	}
+
+	if got := envOrDefault(key, "hello-mysql"); got != "hello-mysql" {
+		t.Fatalf("envOrDefault = %q", got)
+	}
+}
+
+func TestEnvOrDefault_ReturnsTrimmedValueWhenSet(t *testing.T) {
+	t.Setenv("JWT_ISSUER", "  issuer-v1  ")
+
+	if got := envOrDefault("JWT_ISSUER", "hello-mysql"); got != "issuer-v1" {
 		t.Fatalf("envOrDefault = %q", got)
 	}
 }
