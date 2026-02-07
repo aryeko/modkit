@@ -61,6 +61,11 @@ High-signal packages by density:
 - CI enforces Go `1.25.7` plus lint/vuln/coverage gates.
 - Commit and PR titles follow Conventional Commits.
 
+## PR WORKFLOW POLICY
+- If work is driven by a GitHub issue hierarchy (parent/story + sub-issues), PR bodies must include one `Resolves #<number>` line for each implemented issue.
+- If work is not issue-driven, omit `Resolves` (or mark N/A if the active PR template requires the section).
+- If `.github/pull_request_template.md` exists, PR descriptions must follow that template structure.
+
 ## COMMANDS
 ```bash
 make fmt
