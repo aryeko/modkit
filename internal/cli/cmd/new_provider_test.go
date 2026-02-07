@@ -11,21 +11,37 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func captureStdout(t *testing.T, fn func() error) (string, error) {
+func captureStdout(t *testing.T, fn func() error) (out string, errRun error) {
 	t.Helper()
 	orig := os.Stdout
 	r, w, err := os.Pipe()
 	if err != nil {
 		return "", err
 	}
+
 	os.Stdout = w
-	errRun := fn()
-	_ = w.Close()
-	os.Stdout = orig
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
-	_ = r.Close()
-	return buf.String(), errRun
+	var panicV any
+
+	defer func() {
+		os.Stdout = orig
+		_ = w.Close()
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		out = buf.String()
+		_ = r.Close()
+		if panicV != nil {
+			panic(panicV)
+		}
+	}()
+
+	func() {
+		defer func() {
+			panicV = recover()
+		}()
+		errRun = fn()
+	}()
+
+	return out, errRun
 }
 
 func TestCreateNewProvider(t *testing.T) {

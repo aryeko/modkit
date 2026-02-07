@@ -93,3 +93,28 @@ type Module struct{}
 		t.Fatal("expected error when Definition method is missing")
 	}
 }
+
+func TestAddProviderInvalidToken(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name: "users",
+		Providers: []module.ProviderDef{},
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AddProvider(file, "bad token", "buildAuth"); err == nil {
+		t.Fatal("expected error for invalid token format")
+	}
+}

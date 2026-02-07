@@ -7,13 +7,20 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
 )
 
+var providerTokenPattern = regexp.MustCompile(`^[A-Za-z0-9_]+\.[A-Za-z0-9_]+$`)
+
 // AddProvider registers a new provider in the module definition.
 func AddProvider(filePath, providerToken, buildFunc string) error {
+	if !providerTokenPattern.MatchString(providerToken) {
+		return fmt.Errorf("provider token must be in module.component format: %q", providerToken)
+	}
+
 	fset := token.NewFileSet()
 	f, err := decorator.ParseFile(fset, filePath, nil, parser.ParseComments)
 	if err != nil {

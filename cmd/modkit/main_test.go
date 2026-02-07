@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestRunHelp(t *testing.T) {
 	if code := run([]string{"modkit", "--help"}); code != 0 {
@@ -16,7 +19,11 @@ func TestRunInvalidCommand(t *testing.T) {
 
 func TestMainInvokesExit(t *testing.T) {
 	orig := osExit
-	t.Cleanup(func() { osExit = orig })
+	origArgs := os.Args
+	t.Cleanup(func() {
+		osExit = orig
+		os.Args = origArgs
+	})
 
 	called := false
 	got := -1
@@ -25,12 +32,13 @@ func TestMainInvokesExit(t *testing.T) {
 		got = code
 	}
 
+	os.Args = []string{"modkit", "--help"}
 	main()
 
 	if !called {
 		t.Fatal("expected main to call osExit")
 	}
 	if got != 0 {
-		t.Fatalf("expected exit code 0 from test binary args, got %d", got)
+		t.Fatalf("expected exit code 0, got %d", got)
 	}
 }

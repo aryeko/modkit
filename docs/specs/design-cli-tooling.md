@@ -51,7 +51,6 @@ Run:
 $ cd my-service
 $ modkit new module users
 Created internal/modules/users/module.go
-Created internal/modules/users/module_test.go
 ```
 
 ### 4.3. Adding a Provider
@@ -59,7 +58,9 @@ Created internal/modules/users/module_test.go
 ```bash
 $ modkit new provider service --module users
 Created internal/modules/users/service.go
-Updated internal/modules/users/module.go (registered provider)
+TODO: Register provider in internal/modules/users/module.go:
+  Token: "users.service"
+  Build: func(r module.Resolver) (any, error) { return NewServiceService(), nil }
 ```
 
 ## 5. Implementation Details
