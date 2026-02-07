@@ -255,3 +255,56 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatal("expected UsersController to be present")
 	}
 }
+
+func TestAddControllerNoControllersField(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{Name: "users"}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected error when Controllers field is missing")
+	}
+}
+
+func TestAddControllerParseError(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	if err := os.WriteFile(file, []byte("package users\nfunc ("), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected parse error")
+	}
+}
+
+func TestAddControllerNoDefinitionMethod(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+type Module struct{}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected error when Definition method is missing")
+	}
+}

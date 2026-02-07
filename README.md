@@ -122,9 +122,9 @@ package users
 
 import "github.com/go-modkit/modkit/modkit/module"
 
-type Module struct{}
+type UsersModule struct{}
 
-func (m *Module) Definition() module.ModuleDef {
+func (m *UsersModule) Definition() module.ModuleDef {
     return module.ModuleDef{
         Name: "users",
         Providers: []module.ProviderDef{},

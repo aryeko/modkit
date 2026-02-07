@@ -122,7 +122,8 @@ func createNewProvider(name, moduleName string) error {
 		return fmt.Errorf("failed to close file: %w", closeErr)
 	}
 
-	tokenName := fmt.Sprintf("%s.%s", pkgName, strings.ToLower(name))
+	component := strings.ToLower(strings.ReplaceAll(name, "-", "_"))
+	tokenName := fmt.Sprintf("%s.%s", pkgName, component)
 	buildFuncName := "New" + data.Identifier + "Service"
 
 	// Attempt to register provider in module
@@ -133,7 +134,7 @@ func createNewProvider(name, moduleName string) error {
 		fmt.Printf("  Module: %s\n", modulePath)
 		fmt.Printf("  To complete manually, add to Definition().Providers:\n")
 		fmt.Printf("    {Token: %q, Build: %s}\n", tokenName, buildFuncName)
-		return nil
+		return fmt.Errorf("provider registration failed for %q in %s: %w", tokenName, modulePath, err)
 	}
 
 	// Success

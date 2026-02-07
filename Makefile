@@ -80,4 +80,4 @@ cli-smoke-scaffold: cli-smoke-build
 	@test -f /tmp/cli-test/testapp/cmd/api/main.go
 	@test -f /tmp/cli-test/testapp/internal/modules/app/module.go
 	@test -f /tmp/cli-test/testapp/go.mod
-	@cd /tmp/cli-test/testapp && go build ./cmd/api/main.go
+	@cd /tmp/cli-test/testapp && go build ./cmd/api

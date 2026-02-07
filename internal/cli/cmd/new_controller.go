@@ -131,7 +131,7 @@ func createNewController(name, moduleName string) error {
 		fmt.Printf("  Module: %s\n", modulePath)
 		fmt.Printf("  To complete manually, add to Definition().Controllers:\n")
 		fmt.Printf("    {Name: %q, Build: %s}\n", controllerName, buildFuncName)
-		return nil
+		return fmt.Errorf("controller registration failed for %q in %s: %w", controllerName, modulePath, err)
 	}
 
 	fmt.Printf("✓ Created: %s\n", controllerPath)
