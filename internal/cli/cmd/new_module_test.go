@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -35,5 +36,47 @@ func TestCreateNewModule(t *testing.T) {
 func TestCreateNewModuleInvalidName(t *testing.T) {
 	if err := createNewModule("../evil"); err == nil {
 		t.Fatal("expected error for invalid name")
+	}
+}
+
+func TestCreateNewModuleAlreadyExists(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	modulePath := filepath.Join(tmp, "internal", "modules", "users", "module.go")
+	if err := os.MkdirAll(filepath.Dir(modulePath), 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(modulePath, []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := createNewModule("users"); err == nil {
+		t.Fatal("expected error when module file already exists")
+	}
+}
+
+func TestCreateNewModuleMkdirFail(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("permission semantics differ on windows")
+	}
+
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.MkdirAll(filepath.Join(tmp, "internal"), 0o500); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := createNewModule("users"); err == nil {
+		t.Fatal("expected error when destination directory cannot be created")
 	}
 }

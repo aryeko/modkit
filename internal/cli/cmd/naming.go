@@ -65,5 +65,10 @@ func validateScaffoldName(value, label string) error {
 	if strings.Contains(value, "..") || strings.ContainsAny(value, `/\\`) {
 		return fmt.Errorf("invalid %s: %q", label, value)
 	}
+	for _, r := range value {
+		if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_') {
+			return fmt.Errorf("invalid %s: %q", label, value)
+		}
+	}
 	return nil
 }

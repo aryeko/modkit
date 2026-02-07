@@ -43,8 +43,11 @@ func TestValidateScaffoldName(t *testing.T) {
 	if err := validateScaffoldName("users", "module name"); err != nil {
 		t.Fatalf("expected valid name, got %v", err)
 	}
+	if err := validateScaffoldName("user_service-1", "module name"); err != nil {
+		t.Fatalf("expected valid name, got %v", err)
+	}
 
-	invalid := []string{"", "../x", "a/b", `a\\b`}
+	invalid := []string{"", "../x", "a/b", `a\\b`, "my app", "a!"}
 	for _, v := range invalid {
 		if err := validateScaffoldName(v, "module name"); err == nil {
 			t.Fatalf("expected error for %q", v)

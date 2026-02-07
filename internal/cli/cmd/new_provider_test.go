@@ -61,8 +61,78 @@ func TestCreateNewProvider(t *testing.T) {
 	}
 }
 
+func TestCreateNewProviderFromCurrentModuleDir(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+
+	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(moduleDir); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := captureStdout(t, func() error {
+		return createNewProvider("cache", "")
+	}); err != nil {
+		t.Fatalf("createNewProvider from current dir failed: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(moduleDir, "cache.go")); err != nil {
+		t.Fatalf("expected provider file in current module dir, got %v", err)
+	}
+}
+
 func TestCreateNewProviderInvalidName(t *testing.T) {
 	if err := createNewProvider("../evil", "users"); err == nil {
 		t.Fatal("expected error for invalid provider name")
+	}
+}
+
+func TestCreateNewProviderInvalidModuleName(t *testing.T) {
+	if err := createNewProvider("auth", "../users"); err == nil {
+		t.Fatal("expected error for invalid module name")
+	}
+}
+
+func TestCreateNewProviderMissingModuleFile(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := createNewProvider("auth", "users"); err == nil {
+		t.Fatal("expected error when module file is missing")
+	}
+}
+
+func TestCreateNewProviderAlreadyExists(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "auth.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := createNewProvider("auth", "users"); err == nil {
+		t.Fatal("expected error when provider file already exists")
 	}
 }

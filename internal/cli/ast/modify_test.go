@@ -65,3 +65,31 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatal("expected error when Providers field is missing")
 	}
 }
+
+func TestAddProviderParseError(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	if err := os.WriteFile(file, []byte("package users\nfunc ("), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AddProvider(file, "users.auth", "buildAuth"); err == nil {
+		t.Fatal("expected parse error")
+	}
+}
+
+func TestAddProviderNoDefinitionMethod(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+type Module struct{}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := AddProvider(file, "users.auth", "buildAuth"); err == nil {
+		t.Fatal("expected error when Definition method is missing")
+	}
+}

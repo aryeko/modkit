@@ -16,7 +16,3 @@ modules, providers, and controllers.`,
 func Execute() error {
 	return rootCmd.Execute()
 }
-
-func init() {
-	// Global flags can be defined here
-}
