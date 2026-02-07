@@ -9,8 +9,6 @@ import (
 	"text/template"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
 
 	"github.com/go-modkit/modkit/internal/cli/templates"
 )
@@ -32,6 +30,10 @@ func init() {
 }
 
 func createNewProvider(name, moduleName string) error {
+	if err := validateScaffoldName(name, "provider name"); err != nil {
+		return err
+	}
+
 	var moduleDir string
 	var err error
 
@@ -42,6 +44,9 @@ func createNewProvider(name, moduleName string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	} else {
+		if err := validateScaffoldName(moduleName, "module name"); err != nil {
+			return err
+		}
 		// Assume standard structure: internal/modules/<name>
 		moduleDir = filepath.Join("internal", "modules", moduleName)
 	}
@@ -59,25 +64,20 @@ func createNewProvider(name, moduleName string) error {
 		return fmt.Errorf("provider file already exists at %s", providerPath)
 	}
 
-	// Get package name from directory name if not explicit
-	pkgName := strings.ToLower(strings.ReplaceAll(filepath.Base(moduleDir), "-", ""))
+	pkgName := sanitizePackageName(filepath.Base(moduleDir))
 
 	data := struct {
-		Name    string
-		Package string
-		Title   func(string) string
+		Name       string
+		Package    string
+		Identifier string
 	}{
-		Name:    name,
-		Package: pkgName,
-		Title: func(s string) string {
-			return cases.Title(language.English).String(strings.ReplaceAll(s, "-", " "))
-		},
+		Name:       name,
+		Package:    pkgName,
+		Identifier: exportedIdentifier(name),
 	}
 
 	tplFS := templates.FS()
-	tpl, err := template.New("provider.go.tpl").Funcs(template.FuncMap{
-		"Title": data.Title,
-	}).ParseFS(tplFS, "provider.go.tpl")
+	tpl, err := template.ParseFS(tplFS, "provider.go.tpl")
 
 	if err != nil {
 		return fmt.Errorf("failed to parse template: %w", err)
@@ -102,11 +102,11 @@ func createNewProvider(name, moduleName string) error {
 
 	fmt.Printf("Created %s\n", providerPath)
 
-	tokenName := fmt.Sprintf("%s.service", strings.ToLower(name))
+	tokenName := fmt.Sprintf("%s.%s", pkgName, strings.ToLower(name))
 
 	fmt.Printf("TODO: Register provider in %s:\n", modulePath)
 	fmt.Printf("  Token: %q\n", tokenName)
-	fmt.Printf("  Build: func(r module.Resolver) (any, error) { return New%sService(), nil }\n", data.Title(name))
+	fmt.Printf("  Build: func(r module.Resolver) (any, error) { return New%sService(), nil }\n", data.Identifier)
 
 	return nil
 }

@@ -30,6 +30,10 @@ func init() {
 }
 
 func createNewController(name, moduleName string) error {
+	if err := validateScaffoldName(name, "controller name"); err != nil {
+		return err
+	}
+
 	var moduleDir string
 	var err error
 
@@ -40,6 +44,9 @@ func createNewController(name, moduleName string) error {
 			return fmt.Errorf("failed to get current directory: %w", err)
 		}
 	} else {
+		if err := validateScaffoldName(moduleName, "module name"); err != nil {
+			return err
+		}
 		// Assume standard structure: internal/modules/<name>
 		moduleDir = filepath.Join("internal", "modules", moduleName)
 	}

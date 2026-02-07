@@ -106,11 +106,12 @@ For `new provider` and `new controller`, the CLI needs to edit existing `module.
 ## 6. Architecture
 
 ```text
-cli/
-|- main.go           # Entry point (cobra)
-|- internal/
+cmd/
+|- modkit/
+   |- main.go        # Entry point (cobra)
+internal/
+|- cli/
    |- cmd/           # Command implementations (new, version, etc.)
-   |- generator/     # Template rendering logic
    |- ast/           # Code modification logic
    |- templates/     # Embedded .tpl files
 ```

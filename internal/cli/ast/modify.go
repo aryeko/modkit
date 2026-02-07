@@ -94,19 +94,34 @@ func AddProvider(filePath, providerToken, buildFunc string) error {
 	// Write back to file
 	// Clean path for safety
 	filePath = filepath.Clean(filePath)
-	file, err := os.Create(filePath)
+	st, err := os.Stat(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to stat file: %w", err)
+	}
+
+	dir := filepath.Dir(filePath)
+	tmp, err := os.CreateTemp(dir, ".modkit-*.go")
 	if err != nil {
 		return fmt.Errorf("failed to open file for writing: %w", err)
 	}
+	defer func() {
+		_ = os.Remove(tmp.Name())
+	}()
+	if err := os.Chmod(tmp.Name(), st.Mode()); err != nil {
+		return fmt.Errorf("failed to set temp file mode: %w", err)
+	}
 
-	err = decorator.Fprint(file, f)
-	closeErr := file.Close()
+	err = decorator.Fprint(tmp, f)
+	closeErr := tmp.Close()
 
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 	if closeErr != nil {
 		return fmt.Errorf("failed to close file: %w", closeErr)
+	}
+	if err := os.Rename(tmp.Name(), filePath); err != nil {
+		return fmt.Errorf("failed to replace file: %w", err)
 	}
 
 	return nil

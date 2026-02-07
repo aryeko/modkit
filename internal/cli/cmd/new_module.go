@@ -27,6 +27,10 @@ func init() {
 }
 
 func createNewModule(name string) error {
+	if err := validateScaffoldName(name, "module name"); err != nil {
+		return err
+	}
+
 	// Assume we are in the project root or adjust path
 	// For MVP, simplistic path resolution: internal/modules/<name>
 	destDir := filepath.Join("internal", "modules", name)

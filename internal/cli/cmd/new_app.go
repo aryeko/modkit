@@ -29,6 +29,10 @@ func init() {
 }
 
 func createNewApp(name string) error {
+	if err := validateScaffoldName(name, "app name"); err != nil {
+		return err
+	}
+
 	// Check if directory exists and is not empty
 	if _, err := os.Stat(name); err == nil {
 		entries, err := os.ReadDir(name)
@@ -57,9 +61,11 @@ func createNewApp(name string) error {
 	data := struct {
 		Name          string
 		ModkitVersion string
+		ChiVersion    string
 	}{
 		Name:          name,
 		ModkitVersion: "v0.9.0", // TODO: Get latest version dynamically or hardcode for MVP
+		ChiVersion:    "v5.2.4",
 	}
 
 	// Render templates

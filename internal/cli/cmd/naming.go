@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 )
@@ -55,4 +56,14 @@ func exportedIdentifier(name string) string {
 		return "X" + s
 	}
 	return s
+}
+
+func validateScaffoldName(value, label string) error {
+	if value == "" {
+		return fmt.Errorf("%s cannot be empty", label)
+	}
+	if strings.Contains(value, "..") || strings.ContainsAny(value, `/\\`) {
+		return fmt.Errorf("invalid %s: %q", label, value)
+	}
+	return nil
 }
