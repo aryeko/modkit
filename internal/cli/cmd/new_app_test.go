@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func TestCreateNewApp(t *testing.T) {
@@ -147,5 +149,37 @@ func TestCreateNewAppPathIsFile(t *testing.T) {
 
 	if err := createNewApp("demo"); err == nil {
 		t.Fatal("expected error when app path exists as file")
+	}
+}
+
+func TestCreateNewAppRunE(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	binDir := filepath.Join(tmp, "bin")
+	if err := os.MkdirAll(binDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	shim := filepath.Join(binDir, "go")
+	content := "#!/bin/sh\nexit 0\n"
+	if runtime.GOOS == "windows" {
+		shim = filepath.Join(binDir, "go.bat")
+		content = "@echo off\r\nexit /b 0\r\n"
+	}
+	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	oldPath := os.Getenv("PATH")
+	t.Cleanup(func() { _ = os.Setenv("PATH", oldPath) })
+	if err := os.Setenv("PATH", binDir+string(os.PathListSeparator)+oldPath); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := newAppCmd.RunE(&cobra.Command{}, []string{"runetest"}); err != nil {
+		t.Fatalf("RunE failed: %v", err)
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func TestCreateNewModule(t *testing.T) {
@@ -78,5 +80,18 @@ func TestCreateNewModuleMkdirFail(t *testing.T) {
 
 	if err := createNewModule("users"); err == nil {
 		t.Fatal("expected error when destination directory cannot be created")
+	}
+}
+
+func TestCreateNewModuleRunE(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := newModuleCmd.RunE(&cobra.Command{}, []string{"billing"}); err != nil {
+		t.Fatalf("RunE failed: %v", err)
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/spf13/cobra"
 )
 
 func TestCreateNewController(t *testing.T) {
@@ -111,5 +113,73 @@ func TestCreateNewControllerAlreadyExists(t *testing.T) {
 
 	if err := createNewController("auth", "users"); err == nil {
 		t.Fatal("expected error when controller file already exists")
+	}
+}
+
+func TestCreateNewControllerGetwdFailure(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := createNewController("auth", ""); err == nil {
+		t.Fatal("expected error when cwd cannot be resolved")
+	}
+}
+
+func TestCreateNewControllerRunE(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := &cobra.Command{}
+	cmd.Flags().String("module", "", "")
+	if err := cmd.Flags().Set("module", "users"); err != nil {
+		t.Fatal(err)
+	}
+	if err := newControllerCmd.RunE(cmd, []string{"billing"}); err != nil {
+		t.Fatalf("RunE failed: %v", err)
+	}
+}
+
+func TestCreateNewControllerCreateFileFailure(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(moduleDir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+
+	if err := createNewController("auth", "users"); err == nil {
+		t.Fatal("expected error when controller file cannot be created")
 	}
 }
