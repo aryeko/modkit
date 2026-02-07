@@ -46,7 +46,10 @@ func captureStdout(t *testing.T, fn func() error) (out string, errRun error) {
 
 func TestCreateNewProvider(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 	if err := os.Chdir(tmp); err != nil {
 		t.Fatal(err)
@@ -81,7 +84,10 @@ func TestCreateNewProvider(t *testing.T) {
 
 func TestCreateNewProviderFromCurrentModuleDir(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 
 	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
@@ -120,7 +126,10 @@ func TestCreateNewProviderInvalidModuleName(t *testing.T) {
 
 func TestCreateNewProviderMissingModuleFile(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 	if err := os.Chdir(tmp); err != nil {
 		t.Fatal(err)
@@ -133,7 +142,10 @@ func TestCreateNewProviderMissingModuleFile(t *testing.T) {
 
 func TestCreateNewProviderAlreadyExists(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 	if err := os.Chdir(tmp); err != nil {
 		t.Fatal(err)
@@ -157,7 +169,10 @@ func TestCreateNewProviderAlreadyExists(t *testing.T) {
 
 func TestCreateNewProviderGetwdFailure(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 
 	if err := os.Chdir(tmp); err != nil {
@@ -174,7 +189,10 @@ func TestCreateNewProviderGetwdFailure(t *testing.T) {
 
 func TestCreateNewProviderRunE(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 	if err := os.Chdir(tmp); err != nil {
 		t.Fatal(err)
@@ -200,7 +218,10 @@ func TestCreateNewProviderRunE(t *testing.T) {
 
 func TestCreateNewProviderCreateFileFailure(t *testing.T) {
 	tmp := t.TempDir()
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = os.Chdir(wd) })
 	if err := os.Chdir(tmp); err != nil {
 		t.Fatal(err)
