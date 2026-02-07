@@ -441,3 +441,171 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("expected insertion to succeed: %v", err)
 	}
 }
+
+func TestAddProviderSkipsUnsupportedTraversalShapes(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func getDef() module.ModuleDef {
+	return module.ModuleDef{Name: "users"}
+}
+
+func buildProviders() []module.ProviderDef {
+	return nil
+}
+
+func (m *Module) Definition() module.ModuleDef {
+	x := 1
+	_ = x
+	if x == 2 {
+		return getDef()
+	}
+	if x == 1 {
+		return module.ModuleDef{"users"}
+	}
+	return module.ModuleDef{
+		Name:      "users",
+		Providers: buildProviders(),
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddProvider(file, "users.auth", "buildAuth")
+	if err == nil {
+		t.Fatal("expected error when Providers field has unsupported shapes")
+	}
+}
+
+func TestAddControllerSkipsUnsupportedTraversalShapes(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func getDef() module.ModuleDef {
+	return module.ModuleDef{Name: "users"}
+}
+
+func buildControllers() []module.ControllerDef {
+	return nil
+}
+
+func (m *Module) Definition() module.ModuleDef {
+	x := 1
+	_ = x
+	if x == 2 {
+		return getDef()
+	}
+	if x == 1 {
+		return module.ModuleDef{"users"}
+	}
+	return module.ModuleDef{
+		Name:        "users",
+		Controllers: buildControllers(),
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected error when Controllers field has unsupported shapes")
+	}
+}
+
+func TestAddProviderTempError(t *testing.T) {
+	tmp := t.TempDir()
+	moduleDir := filepath.Join(tmp, "module")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(moduleDir, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name: "users",
+		Providers: []module.ProviderDef{},
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chmod(moduleDir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+
+	err := AddProvider(file, "users.auth", "buildAuth")
+	if err == nil {
+		t.Fatal("expected temp file creation error")
+	}
+	var perr *ProviderError
+	if !errors.As(err, &perr) {
+		t.Fatalf("expected ProviderError, got %T", err)
+	}
+	if perr.Op != "temp" {
+		t.Fatalf("expected temp op, got %q", perr.Op)
+	}
+}
+
+func TestAddControllerTempError(t *testing.T) {
+	tmp := t.TempDir()
+	moduleDir := filepath.Join(tmp, "module")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(moduleDir, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name: "users",
+		Controllers: []module.ControllerDef{},
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.Chmod(moduleDir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected temp file creation error")
+	}
+	var cerr *ControllerError
+	if !errors.As(err, &cerr) {
+		t.Fatalf("expected ControllerError, got %T", err)
+	}
+	if cerr.Op != "temp" {
+		t.Fatalf("expected temp op, got %q", cerr.Op)
+	}
+}
