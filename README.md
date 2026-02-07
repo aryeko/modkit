@@ -106,6 +106,7 @@ We pin the patch level to 1.25.7 in CI to align with vulnerability scanning and 
 | Package | Description |
 |---------|-------------|
 | `modkit/module` | Module metadata types (`ModuleDef`, `ProviderDef`, `Token`) |
+| `modkit/config` | Typed environment config module helpers |
 | `modkit/kernel` | Graph builder, visibility enforcer, bootstrap |
 | `modkit/http` | HTTP adapter for chi router |
 | `modkit/logging` | Logging interface with slog adapter |
