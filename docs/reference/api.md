@@ -91,29 +91,13 @@ type Resolver interface {
 
 Used in `Build` functions to retrieve dependencies.
 
----
-
-## kernel
-
-### Bootstrap
+### Get[T] (Generic Helper)
 
 ```go
-func Bootstrap(root Module) (*App, error)
+func Get[T any](r Resolver, token Token) (T, error)
 ```
 
-Entry point for bootstrapping your application. Returns an `App` with built controllers and a container for accessing providers.
-
-### App
-
-```go
-type App struct {
-    Controllers map[string]any
-}
-```
-
-| Field | Description |
-|-------|-------------|
-| `Controllers` | Map of controller key (`module:controller`) → controller instance |
+Type-safe wrapper around `Resolver.Get`. Returns an error if resolution fails or if the type doesn't match `T`.
 
 ### App.Get
 
@@ -121,7 +105,7 @@ type App struct {
 func (a *App) Get(token Token) (any, error)
 ```
 
-Resolves a token from the root module scope.
+Resolves a token from the root module scope. Note that `module.Get[T]` can be used with an `App` instance because `App` implements the `Resolver` interface.
 
 ### App.Resolver
 
@@ -257,15 +241,21 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Providers: []module.ProviderDef{{
             Token: "users.service",
             Build: func(r module.Resolver) (any, error) {
-                db, _ := r.Get("db.connection")
-                return NewUsersService(db.(*sql.DB)), nil
+                db, err := module.Get[*sql.DB](r, "db.connection")
+                if err != nil {
+                    return nil, err
+                }
+                return NewUsersService(db), nil
             },
         }},
         Controllers: []module.ControllerDef{{
             Name: "UsersController",
             Build: func(r module.Resolver) (any, error) {
-                svc, _ := r.Get("users.service")
-                return NewUsersController(svc.(UsersService)), nil
+                svc, err := module.Get[UsersService](r, "users.service")
+                if err != nil {
+                    return nil, err
+                }
+                return NewUsersController(svc), nil
             },
         }},
         Exports: []module.Token{"users.service"},

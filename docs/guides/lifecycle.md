@@ -116,13 +116,16 @@ Once built, providers are cached as singletons:
 
 ```go
 // First call: builds the provider
-svc1, _ := r.Get("users.service")
+svc, err := module.Get[UserService](r, "users.service")
 
 // Second call: returns cached instance
-svc2, _ := r.Get("users.service")
+svc2, err := module.Get[UserService](r, "users.service")
+if err != nil {
+    return nil, err
+}
 
-// svc1 and svc2 are the same instance
-fmt.Println(svc1 == svc2)  // true
+// svc and svc2 are the same instance
+fmt.Println(svc == svc2)  // true
 ```
 
 **Why singletons?**
@@ -189,11 +192,13 @@ func main() {
     }
     
     // Get resources that need cleanup
-    db, _ := app.Get("db.connection")
-    sqlDB := db.(*sql.DB)
+    db, err := module.Get[*sql.DB](app, "db.connection")
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // Defer cleanup
-    defer sqlDB.Close()
+    defer db.Close()
     
     // Start server
     router := mkhttp.NewRouter()
@@ -235,22 +240,31 @@ func (c *Cleanup) Run() error {
     return &Cleanup{}, nil
 }},
 {Token: "db", Build: func(r module.Resolver) (any, error) {
-    cleanup, _ := r.Get("cleanup")
+    cleanup, err := module.Get[*Cleanup](r, "cleanup")
+    if err != nil {
+        return nil, err
+    }
     
     db, err := sql.Open("mysql", dsn)
     if err != nil {
         return nil, err
     }
     
-    cleanup.(*Cleanup).Register(db.Close)
+    cleanup.Register(db.Close)
     return db, nil
 }},
 
 // In main
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
-    cleanup, _ := app.Get("cleanup")
-    defer cleanup.(*Cleanup).Run()
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    cleanup, err := module.Get[*Cleanup](app, "cleanup")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer cleanup.Run()
     // ...
 }
 ```
@@ -434,11 +448,17 @@ func (m *DatabaseModule) Definition() module.ModuleDef {
 }
 
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // Get DB for cleanup
-    db, _ := app.Get("db.connection")
-    defer db.(*sql.DB).Close()
+    db, err := module.Get[*sql.DB](app, "db.connection")
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer db.Close()
     
     // Start server (DB connection created on first query)
     router := mkhttp.NewRouter()

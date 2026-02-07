@@ -204,11 +204,11 @@ func (m *AuthModule) Definition() module.ModuleDef {
             {
                 Token: "auth.middleware",
                 Build: func(r module.Resolver) (any, error) {
-                    svc, err := r.Get(TokenAuthService)
+                    svc, err := module.Get[*AuthService](r, TokenAuthService)
                     if err != nil {
                         return nil, err
                     }
-                    return JWTMiddleware(svc.(*AuthService).Secret()), nil
+                    return JWTMiddleware(svc.Secret()), nil
                 },
             },
         },
@@ -220,10 +220,16 @@ func (m *AuthModule) Definition() module.ModuleDef {
 Usage at startup:
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
-authMW, _ := app.Get("auth.middleware")
-router.Use(authMW.(func(http.Handler) http.Handler))
+authMW, err := module.Get[func(http.Handler) http.Handler](app, "auth.middleware")
+if err != nil {
+    log.Fatal(err)
+}
+router.Use(authMW)
 ```
 
 ## Optional Authentication

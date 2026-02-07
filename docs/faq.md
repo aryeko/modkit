@@ -38,8 +38,11 @@ modkit uses explicit `Build` functions and string tokens. Everything is visible 
 String tokens are simple, explicit, and work without reflection. The trade-off is manual type casting when you call `Get()`:
 
 ```go
-svc, _ := r.Get("users.service")
-userService := svc.(UsersService)
+svc, err := module.Get[UsersService](r, "users.service")
+if err != nil {
+    return nil, err
+}
+// svc is already of type UsersService
 ```
 
 This is intentional—it keeps the framework small and makes dependencies visible.
@@ -83,10 +86,16 @@ Yes. Modules must be passed as pointers to ensure stable identity when shared ac
 
 ```go
 // Correct
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
 // Wrong - will not work correctly
-app, _ := kernel.Bootstrap(AppModule{})
+app, err = kernel.Bootstrap(AppModule{})  // rejected
+if err != nil {
+    // handle error
+}
 ```
 
 ### Can I have circular module imports?

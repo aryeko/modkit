@@ -48,10 +48,16 @@ Modules must be passed as pointers to ensure stable identity across shared impor
 
 ```go
 // Correct: pass pointer
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
 // Wrong: value type loses identity
-app, _ := kernel.Bootstrap(AppModule{})  // rejected
+app, err = kernel.Bootstrap(AppModule{})  // rejected
+if err != nil {
+    // handle error
+}
 ```
 
 If two modules import the same dependency, they must share the same pointer:
@@ -124,11 +130,11 @@ Example:
 module.ControllerDef{
     Name: "UsersController",
     Build: func(r module.Resolver) (any, error) {
-        dbAny, err := r.Get(TokenDB)
+        db, err := module.Get[*sql.DB](r, TokenDB)
         if err != nil {
             return nil, err
         }
-        return NewUsersController(dbAny.(*sql.DB)), nil
+        return NewUsersController(db), nil
     },
 }
 ```
@@ -196,13 +202,9 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Providers: []module.ProviderDef{{
             Token: TokenUsersService,
             Build: func(r module.Resolver) (any, error) {
-                dbAny, err := r.Get(TokenDB)
+                db, err := module.Get[*sql.DB](r, TokenDB)
                 if err != nil {
                     return nil, err
-                }
-                db, ok := dbAny.(*sql.DB)
-                if !ok {
-                    return nil, fmt.Errorf("expected *sql.DB for %q", TokenDB)
                 }
                 return NewUsersService(db), nil
             },
@@ -289,15 +291,21 @@ func (m *UsersModule) Definition() module.ModuleDef {
         Providers: []module.ProviderDef{{
             Token: TokenUsersService,
             Build: func(r module.Resolver) (any, error) {
-                db, _ := r.Get(TokenDB)
-                return NewUsersService(db.(*sql.DB)), nil
+                db, err := module.Get[*sql.DB](r, TokenDB)
+                if err != nil {
+                    return nil, err
+                }
+                return NewUsersService(db), nil
             },
         }},
         Controllers: []module.ControllerDef{{
             Name: "UsersController",
             Build: func(r module.Resolver) (any, error) {
-                svc, _ := r.Get(TokenUsersService)
-                return NewUsersController(svc.(UsersService)), nil
+                svc, err := module.Get[UsersService](r, TokenUsersService)
+                if err != nil {
+                    return nil, err
+                }
+                return NewUsersController(svc), nil
             },
         }},
         Exports: []module.Token{TokenUsersService},
@@ -357,7 +365,10 @@ func main() {
         orders: orders,
     }
     
-    appInstance, _ := kernel.Bootstrap(app)
+    app, err := kernel.Bootstrap(app)
+    if err != nil {
+        log.Fatal(err)
+    }
     // ...
 }
 ```

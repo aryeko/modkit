@@ -172,10 +172,16 @@ stateDiagram-v2
 
 ```go
 // First call: builds the provider
-svc, _ := r.Get("users.service")
+svc, err := module.Get[UserService](r, "users.service")
+if err != nil {
+    return nil, err
+}
 
 // Second call: returns cached instance
-svc2, _ := r.Get("users.service")  // same instance as svc
+svc2, err := module.Get[UserService](r, "users.service")  // same instance as svc
+if err != nil {
+    return nil, err
+}
 ```
 
 Cycles are detected at build time and return a `ProviderCycleError`.
@@ -185,7 +191,10 @@ Cycles are detected at build time and return a `ProviderCycleError`.
 Controllers are built after providers and returned in `App.Controllers`. Keys are namespaced as `module:controller`:
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
 
 // Controllers are ready to use
 for name, controller := range app.Controllers {

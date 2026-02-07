@@ -86,18 +86,16 @@ module.ProviderDef{
     Token: TokenUsersService,
     Build: func(r module.Resolver) (any, error) {
         // Get a dependency
-        dbAny, err := r.Get(TokenDB)
+        db, err := module.Get[*sql.DB](r, TokenDB)
         if err != nil {
             return nil, err
         }
-        db := dbAny.(*sql.DB)
         
         // Get another dependency
-        loggerAny, err := r.Get(TokenLogger)
+        logger, err := module.Get[Logger](r, TokenLogger)
         if err != nil {
             return nil, err
         }
-        logger := loggerAny.(Logger)
         
         return NewUsersService(db, logger), nil
     },
@@ -183,8 +181,11 @@ type MySQLUserRepository struct {
 
 // Provider returns interface type
 Build: func(r module.Resolver) (any, error) {
-    db, _ := r.Get(TokenDB)
-    return &MySQLUserRepository{db: db.(*sql.DB)}, nil
+    db, err := module.Get[*sql.DB](r, TokenDB)
+    if err != nil {
+        return nil, err
+    }
+    return &MySQLUserRepository{db: db}, nil
 }
 ```
 
@@ -194,13 +195,16 @@ For providers that need cleanup (database connections, file handles), handle shu
 
 ```go
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     
     // ... run server ...
     
     // Cleanup on shutdown
-    if db, err := app.Get("db.connection"); err == nil {
-        db.(*sql.DB).Close()
+    if db, err := module.Get[*sql.DB](app, "db.connection"); err == nil {
+        db.Close()
     }
 }
 ```

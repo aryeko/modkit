@@ -84,7 +84,10 @@ func main() {
 
 ```go
 func main() {
-    app, _ := kernel.Bootstrap(&AppModule{})
+    app, err := kernel.Bootstrap(&AppModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
     router := mkhttp.NewRouter()
     mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
     mkhttp.Serve(":8080", router)
@@ -95,7 +98,7 @@ func main() {
 
 | Aspect | Fx | modkit |
 |--------|-----|--------|
-| Injection | Automatic via reflection | Explicit via `r.Get(token)` |
+| Injection | Automatic via reflection | Explicit via `module.Get[T](r, token)` |
 | Lifecycle | `OnStart`/`OnStop` hooks | Manual cleanup |
 | Module system | Groups (no visibility) | Full visibility enforcement |
 | Type safety | Runtime type matching | Compile-time (explicit casts) |
@@ -126,8 +129,14 @@ svc := do.MustInvoke[UserService](injector)
 ### modkit Approach
 
 ```go
-app, _ := kernel.Bootstrap(&AppModule{})
-svc, _ := app.Get("users.service")
+app, err := kernel.Bootstrap(&AppModule{})
+if err != nil {
+    log.Fatal(err)
+}
+svc, err := module.Get[UserService](app, "users.service")
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ### Key Differences
@@ -174,7 +183,10 @@ func main() {
     usersModule := users.NewModule(dbModule)
     appModule := app.NewModule(usersModule)
     
-    app, _ := kernel.Bootstrap(appModule)
+    app, err := kernel.Bootstrap(appModule)
+    if err != nil {
+        log.Fatal(err)
+    }
     router := mkhttp.NewRouter()
     mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
     mkhttp.Serve(":8080", router)
@@ -211,7 +223,7 @@ modkit is directly inspired by [NestJS](https://nestjs.com/), bringing similar c
 | `@Module()` decorator | `ModuleDef` struct |
 | `@Injectable()` | `ProviderDef` |
 | `@Controller()` | `ControllerDef` |
-| Constructor injection | `r.Get(token)` |
+| Constructor injection | `module.Get[T](r, token)` |
 | `imports` | `Imports` |
 | `providers` | `Providers` |
 | `exports` | `Exports` |
