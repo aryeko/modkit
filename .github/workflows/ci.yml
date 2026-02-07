@@ -83,25 +83,7 @@ jobs:
             go.mod
 
       - name: Build CLI
-        run: go build -o /tmp/modkit ./cmd/modkit
+        run: make cli-smoke-build
 
       - name: Test CLI scaffolding
-        run: |
-          set -e
-          cd /tmp
-          mkdir -p cli-test
-          cd cli-test
-
-          # Create new app
-          /tmp/modkit new app testapp
-          cd testapp
-
-          # Verify generated files exist
-          test -f cmd/api/main.go
-          test -f internal/modules/app/module.go
-          test -f go.mod
-
-          # Verify the app compiles
-          go build ./cmd/api/main.go
-
-          echo "CLI smoke test passed!"
+        run: make cli-smoke-scaffold
