@@ -9,146 +9,207 @@
 
 This document specifies a reusable Config Module for core `modkit`.
 
-Current configuration loading exists in example apps (`examples/hello-mysql/internal/config` and `examples/hello-mysql/internal/platform/config`) but not as a core framework capability. This spec defines a standard way to load typed config from environment variables into the DI container, aligned with modkit principles: explicit wiring, deterministic bootstrap, and no reflection magic.
+Today, configuration loading exists only in example apps (`examples/hello-mysql/internal/config` and `examples/hello-mysql/internal/platform/config`). This spec defines a standard, reusable way to load typed configuration from environment variables into the DI container while preserving modkit constraints: explicit wiring, deterministic behavior, typed errors, and no reflection magic.
 
 ## 2. Goals
 
-- Provide a first-class, reusable configuration pattern for modkit apps.
-- Support typed config values resolved via `module.Get[T]`.
-- Make defaults, required keys, and parse errors explicit and deterministic.
-- Preserve module visibility/export rules for config tokens.
-- Keep implementation lightweight and standard-library-first.
+- Provide a first-class config pattern for modkit applications.
+- Support typed config resolution via `module.Get[T]`.
+- Make required keys, defaults, and parse failures explicit.
+- Preserve module visibility/export semantics for config tokens.
+- Keep v1 lightweight and standard-library-first.
 
 ## 3. Non-Goals
 
-- Full-featured external config framework replacement (Viper/Koanf class scope).
-- Automatic binding from struct tags using reflection.
+- Replacing full-feature config frameworks (Viper/Koanf scope).
+- Implicit binding via struct tags/reflection.
 - Dynamic hot-reload/watch mode in v1.
 - Secret manager integrations (Vault/SSM/etc.) in v1.
+- Owning full domain validation (business constraints stay in feature modules).
 
 ## 4. Design Principles
 
-- **Explicit schema:** app defines exactly which keys are read.
-- **Deterministic bootstrap:** config is loaded at provider build and fails early on invalid required values.
+- **Explicit schema:** callers define exactly which keys are read and how they parse.
+- **Deterministic behavior:** same source and schema always produce same results.
 - **No hidden globals:** no package-level mutable config singleton.
-- **Composable modules:** config providers can be private or exported via normal module metadata.
-- **Clear errors:** include env key, expected type, and module/token context.
+- **Composable modules:** config is a normal module with normal exports.
+- **Typed contextual errors:** include key, expected type, and wrapped parse/source error.
+- **Secret-safe diagnostics:** values are never included for sensitive keys.
 
 ## 5. Proposed Package and API Shape
 
-## 5.1. Package Location
+### 5.1. Package Location
 
 - New core package: `modkit/config`
 
-## 5.2. Core Types (Conceptual)
+### 5.2. Core Source Abstraction
 
 ```go
-type KeySpec struct {
+type Source interface {
+    Lookup(key string) (value string, ok bool)
+}
+```
+
+v1 default source is environment (`os.LookupEnv`).
+
+### 5.3. Core Option and Spec Types
+
+```go
+type Option func(*Builder)
+
+type Builder struct {
+    source Source
+}
+
+type ValueSpec[T any] struct {
     Key         string
     Required    bool
-    Default     *string
+    AllowEmpty  bool
+    Default     *T
+    Sensitive   bool
     Description string
-}
-
-type Source interface {
-    Get(key string) (string, bool)
-}
-
-type LoadError struct {
-    Key    string
-    Reason string
+    Parse       func(raw string) (T, error)
 }
 ```
 
 Notes:
+- No `schema any` in v1.
+- Every parsed value is explicit via `ValueSpec[T]`.
+- `Sensitive` controls diagnostics redaction only; it does not change parsing semantics.
+- `AllowEmpty` controls whether an empty-after-trim value is treated as explicitly set (`true`) or unset (`false`, default).
 
-- `Source` defaults to environment source in v1 (`os.LookupEnv`).
-- `KeySpec` captures required/default semantics explicitly.
-- Parsing helpers return typed values and rich errors.
+### 5.4. Helper Constructors and Parsers
 
-## 5.3. Module Construction Pattern
+```go
+func NewModule(opts ...Option) module.Module
+func WithSource(src Source) Option
+func WithTyped[T any](token module.Token, spec ValueSpec[T], export bool) Option
 
-The config package should provide helper constructors (names illustrative):
+func ParseString(raw string) (string, error)
+func ParseInt(raw string) (int, error)
+func ParseFloat64(raw string) (float64, error)
+func ParseBool(raw string) (bool, error)
+func ParseDuration(raw string) (time.Duration, error)
+func ParseCSV(raw string) ([]string, error)
+```
 
-- `config.NewModule(opts ...Option) module.Module`
-- `config.WithToken(token module.Token)`
-- `config.WithSchema(schema any)` or explicit field registration options
-- `config.WithSource(src Source)`
-
-No reflection auto-binding is required for v1. If schema struct support is added, it must remain explicit and deterministic.
+Design intent:
+- `NewModule` returns a regular module that registers providers for configured tokens.
+- `WithTyped` is called once per token; this preserves explicitness and avoids reflection.
+- Parsers are public helpers so apps can share tested behavior and compose custom parsers.
 
 ## 6. Token and Visibility Model
 
-## 6.1. Token Convention
+### 6.1. Token Convention
 
-- Base token prefix: `config.`
-- Recommended exported tokens:
-  - `config.raw` (optional map/string view)
-  - `config.app` (typed app config struct)
+- Recommended prefix remains `config.`
+- v1 recommendation: typed tokens only (for example `config.app`, `config.http`, `config.auth`)
+- No built-in `config.raw` export in v1
 
-## 6.2. Visibility
+### 6.2. Visibility
 
-- Config module can keep raw internals private.
-- Apps should export only typed config tokens needed by importers.
-- Standard modkit visibility rules apply with no exceptions.
+- Config providers follow standard `ModuleDef.Exports` semantics.
+- Config module internals remain private unless explicitly exported.
+- No visibility exceptions are added for config.
 
-## 7. Loading and Validation Semantics
+## 7. Loading and Parsing Semantics
 
-## 7.1. String Resolution
+### 7.1. Raw Value Resolution
 
-For each configured key:
+For each key:
 
-1. Read from source (`LookupEnv`).
-2. Trim spaces.
-3. If empty and default exists, use default.
-4. If required and still empty, return typed load error.
+1. Read from `Source.Lookup`.
+2. Trim surrounding spaces.
+3. Treat missing as "unset".
+4. Treat empty-after-trim as:
+   - unset when `AllowEmpty == false` (default),
+   - explicitly set when `AllowEmpty == true`.
+5. If unset and default exists, use default.
+6. If unset and required, return `MissingRequiredError`.
+7. Otherwise parse via the spec parser.
 
-## 7.2. Type Parsing Helpers
+### 7.2. Parser Semantics
 
-Provide explicit helpers for common types:
+- `ParseDuration` uses Go standard `time.ParseDuration` only (no aliases in v1).
+- `ParseCSV` splits on `,`, trims each value, and drops empty items.
+- Parse failures return `ParseError` with key and expected type context.
 
-- `String`
-- `Int`
-- `Float64`
-- `Bool`
-- `Duration`
-- `CSV []string`
+### 7.3. Failure Timing
 
-Each helper must include key name in parse error context.
+modkit providers are lazy. Therefore:
+- config load/parse fails when the config provider is first resolved.
+- in typical apps this occurs during bootstrap when controllers/providers resolve config.
+- if an app requires strict eager validation, it should add a startup provider that resolves required config tokens explicitly.
 
-## 7.3. Error Model
+## 8. Error Model
 
-Expected categories:
+```go
+type MissingRequiredError struct {
+    Key       string
+    Token     module.Token
+    Sensitive bool
+}
 
-- Missing required key
-- Invalid parse for key/type
-- Invalid schema/spec definition (developer error)
+type ParseError struct {
+    Key       string
+    Token     module.Token
+    Type      string
+    Sensitive bool
+    Err       error
+}
 
-Error messages should be structured for test assertions and operator troubleshooting.
+type InvalidSpecError struct {
+    Token  module.Token
+    Reason string
+}
 
-## 8. Security Considerations
+var (
+    ErrMissingRequired = errors.New("config: missing required key")
+    ErrParse           = errors.New("config: parse error")
+    ErrInvalidSpec     = errors.New("config: invalid spec")
+)
+```
 
-- Never log secret values in errors.
-- Allow marking keys as sensitive to force redaction in diagnostics.
-- Optional debug dump (if any) must redact sensitive keys by default.
-- Docs should recommend secrets from environment/secret store injection, not committed files.
+Requirements:
+- Errors must support `errors.As` for typed inspection.
+- Errors must support `errors.Is` against sentinel categories (`ErrMissingRequired`, `ErrParse`, `ErrInvalidSpec`).
+- `MissingRequiredError`, `ParseError`, and `InvalidSpecError` should implement `Unwrap()` to return their category sentinel; `ParseError.Unwrap()` should also preserve the underlying parse/source cause.
+- Error strings include key/token/type context, never secret values for sensitive keys.
+- Invalid spec errors represent developer misconfiguration and should fail deterministically.
 
-## 9. Integration Pattern
+## 9. Security Considerations
 
-Example module wiring shape:
+- Never include raw secret values in logs or error strings.
+- Respect `Sensitive` for key-level redaction.
+- If debug/inspection output is introduced later, default it to redacted values.
+- Docs should continue recommending env/secret-store injection instead of committed files.
+
+## 10. Integration Pattern
 
 ```go
 type AppConfig struct {
     HTTPAddr  string
     JWTSecret string
+    JWTTTL    time.Duration
 }
 
 const TokenAppConfig module.Token = "config.app"
 
-func (m *AppModule) Definition() module.ModuleDef {
-    cfgModule := config.NewModule(
-        // explicit schema/options
+func newConfigModule() module.Module {
+    return config.NewModule(
+        config.WithTyped(TokenAppConfig,
+            config.ValueSpec[AppConfig]{
+                Key:      "APP_CONFIG", // illustrative: app may also compose smaller tokens
+                Required: true,
+                Parse:    parseAppConfig,
+            },
+            true,
+        ),
     )
+}
+
+func (m *AppModule) Definition() module.ModuleDef {
+    cfgModule := newConfigModule()
 
     return module.ModuleDef{
         Name:    "app",
@@ -167,52 +228,115 @@ func (m *AppModule) Definition() module.ModuleDef {
 }
 ```
 
-## 10. Testing Strategy
+Note: the example above shows API shape only. Real-world usage will usually define explicit specs per env key and compose a typed struct in provider build logic.
 
-## 10.1. Unit Tests
+## 11. Testing Strategy
 
-- Key resolution (present, empty, missing, defaulted).
-- Typed parsing for supported primitives.
+### 11.1. Unit Tests
+
+- Source resolution: present/missing/whitespace/default/required.
+- Parser helpers: valid and invalid cases for each supported type.
+- Error typing: `errors.As` for missing/parse/spec errors.
 - Redaction behavior for sensitive keys.
-- Error typing and error message content.
 
-## 10.2. Integration Tests
+### 11.2. Integration Tests
 
-- Bootstrapping app with config module succeeds with valid env.
-- Bootstrapping fails fast for missing required keys.
-- Visibility checks when config token is not exported.
+- Bootstrapping succeeds with valid env.
+- First config resolution fails with descriptive error for missing required key.
+- Visibility checks for non-exported config tokens.
 
-## 10.3. Compatibility Tests
+### 11.3. Compatibility Tests
 
-- Ensure example-app migration preserves behavior for existing env vars.
+- Migration tests preserve existing `hello-mysql` env key behavior.
+- Duration parsing remains compatible with current `JWT_TTL` usage (`time.ParseDuration`).
 
-## 11. Adoption and Migration Plan
+## 12. Adoption and Migration Plan
 
-1. Add core `modkit/config` package with basic env source and typed parsing helpers.
-2. Introduce guide docs showing recommended config module composition.
-3. Migrate `examples/hello-mysql` incrementally to consume core config module patterns.
-4. Keep example-specific wrappers only where app-specific semantics differ.
+1. Add `modkit/config` with source abstraction, parser helpers, and typed spec plumbing.
+2. Add docs guide for recommended token naming and module wiring.
+3. Migrate `examples/hello-mysql` incrementally to core config helpers.
+4. Keep small app-local wrappers only where domain-specific transformation is needed.
 
-## 12. Acceptance Criteria
+## 13. Acceptance Criteria
 
 This PRD item is complete when all are true:
 
-1. A core config package exists in `modkit/` and is documented.
-2. Apps can load typed config via module providers and `module.Get[T]`.
-3. Missing/invalid required config fails at bootstrap with descriptive errors.
-4. Sensitive keys are redacted in any config diagnostics.
+1. A core `modkit/config` package exists and is documented.
+2. Apps can resolve typed config via `module.Get[T]`.
+3. Missing/invalid required config returns typed descriptive errors.
+4. Sensitive keys are redacted from diagnostic/error value surfaces.
 5. At least one example app demonstrates the core pattern.
 
-## 13. Open Questions
+## 14. Resolved v1 Decisions
 
-1. Should v1 expose a map-like raw config token, or typed-only tokens?
-2. Should duration parsing support strict format only (Go duration) or aliases?
-3. Should `.env` file support be included in core or kept out-of-scope?
-4. Should config module own validation rules, or only load and parse while feature modules validate domain constraints?
+1. **Raw token exposure:** typed-only by default; no built-in `config.raw` export in v1.
+2. **Duration parsing:** strict Go duration format only (`time.ParseDuration`).
+3. **`.env` support:** out of core scope; callers may wrap `Source` externally.
+4. **Validation ownership:** config module loads/parses only; feature modules validate domain constraints.
 
-## 14. Future Enhancements (Not in v1)
+## 15. Future Enhancements (Not in v1)
 
 - Multi-source layering (env + file + flags).
-- Live reload callbacks.
+- Optional eager validation helper for strict startup guarantees.
 - Secret manager source adapters.
-- Schema export for docs generation.
+- Schema export for documentation generation.
+
+## 16. Implementation Blueprint (v1)
+
+This section defines a minimal delivery plan mapped to concrete files and test coverage.
+
+### 16.1. New Package Files
+
+Create `modkit/config/` with:
+
+- `source.go`
+  - `type Source interface { Lookup(key string) (string, bool) }`
+  - default env source implementation (`os.LookupEnv` wrapper)
+- `parse.go`
+  - `ParseString`, `ParseInt`, `ParseFloat64`, `ParseBool`, `ParseDuration`, `ParseCSV`
+- `errors.go`
+  - `MissingRequiredError`, `ParseError`, `InvalidSpecError` with wrapped errors where applicable
+- `module.go`
+  - option plumbing (`Option`, builder)
+  - `NewModule(opts ...Option) module.Module`
+  - `WithSource`, `WithTyped`
+  - provider creation from typed specs, export handling
+
+### 16.2. Unit Tests
+
+Add:
+
+- `modkit/config/parse_test.go`
+  - table-driven tests for all parser helpers
+  - whitespace behavior and invalid parse assertions
+- `modkit/config/errors_test.go`
+  - error string context and `errors.As`/`errors.Is` behavior
+- `modkit/config/module_test.go`
+  - required/default behavior
+  - missing required error typing
+  - parse failure typing and context
+  - sensitive redaction safety checks
+  - token export behavior through kernel visibility
+
+### 16.3. Integration Tests (Kernel + Config)
+
+Add `modkit/config/integration_test.go`:
+
+- boot app with config module and successful typed resolution
+- verify non-exported config token is not visible to importer (`TokenNotVisibleError`)
+- verify first config resolution fails for required missing key with typed error
+
+### 16.4. Example Migration (hello-mysql)
+
+Incremental migration target:
+
+1. Keep `examples/hello-mysql/internal/platform/config` public API stable (`Load()` remains).
+2. Internally re-implement parsing with `modkit/config` helpers first.
+3. Optionally introduce module-level config tokens for consumers in `internal/modules/app` after behavior parity tests pass.
+
+This keeps runtime behavior stable while demonstrating adoption.
+
+### 16.5. Documentation Updates
+
+- Add `docs/guides/configuration.md` with env-first typed config examples.
+- Cross-link from `README.md` guide list.
