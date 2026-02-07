@@ -609,3 +609,129 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("expected temp op, got %q", cerr.Op)
 	}
 }
+
+func TestAddProviderTopLevelReturnNonComposite(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func getDef() module.ModuleDef {
+	return module.ModuleDef{Name: "users"}
+}
+
+func (m *Module) Definition() module.ModuleDef {
+	return getDef()
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddProvider(file, "users.auth", "buildAuth")
+	if err == nil {
+		t.Fatal("expected error for non-composite top-level return")
+	}
+}
+
+func TestAddProviderTopLevelCompositeWithNonKeyValueElements(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{"users"}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddProvider(file, "users.auth", "buildAuth")
+	if err == nil {
+		t.Fatal("expected error for composite literal without key-value elements")
+	}
+}
+
+func TestAddControllerTopLevelReturnNonComposite(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func getDef() module.ModuleDef {
+	return module.ModuleDef{Name: "users"}
+}
+
+func (m *Module) Definition() module.ModuleDef {
+	return getDef()
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected error for non-composite top-level return")
+	}
+}
+
+func TestAddControllerTopLevelCompositeWithNonKeyValueElements(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{"users"}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err == nil {
+		t.Fatal("expected error for composite literal without key-value elements")
+	}
+}
+
+func TestAddControllerDuplicateScanSkipsNonKeyValueElements(t *testing.T) {
+	tmp := t.TempDir()
+	file := filepath.Join(tmp, "module.go")
+	content := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type Module struct{}
+
+func (m *Module) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name: "users",
+		Controllers: []module.ControllerDef{{someInvalidExpr}},
+	}
+}
+`
+	if err := os.WriteFile(file, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := AddController(file, "UsersController", "NewUsersController")
+	if err != nil {
+		t.Fatalf("expected insertion to succeed despite invalid existing shape: %v", err)
+	}
+}
