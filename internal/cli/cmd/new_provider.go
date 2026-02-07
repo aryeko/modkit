@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/go-modkit/modkit/internal/cli/ast"
 	"github.com/go-modkit/modkit/internal/cli/templates"
 )
 
@@ -29,6 +30,27 @@ func init() {
 	newCmd.AddCommand(newProviderCmd)
 }
 
+// createNewProvider creates a new provider file and registers it in the module.
+//
+// UX/Error Contract:
+//
+// Success:
+// ✓ Created: <file-path>
+// ✓ Registered in: <module-path>
+//
+// Partial Failure (File created, registration failed):
+// ✓ Created: <file-path>
+// ✗ Registration failed: <error-details>
+//
+//	Module: <module-path>
+//	To complete manually, add to Definition().Providers:
+//	  {Token: "<token>", Build: <build-func>}
+//
+// Full Failure:
+// ✗ Failed to <operation>: <error-details>
+//
+//	Target: <target-path>
+//	Remediation: <actionable-guidance>
 func createNewProvider(name, moduleName string) error {
 	if err := validateScaffoldName(name, "provider name"); err != nil {
 		return err
@@ -100,13 +122,24 @@ func createNewProvider(name, moduleName string) error {
 		return fmt.Errorf("failed to close file: %w", closeErr)
 	}
 
-	fmt.Printf("Created %s\n", providerPath)
+	component := strings.ToLower(strings.ReplaceAll(name, "-", "_"))
+	tokenName := fmt.Sprintf("%s.%s", pkgName, component)
+	buildFuncName := "New" + data.Identifier + "Service"
 
-	tokenName := fmt.Sprintf("%s.%s", pkgName, strings.ToLower(name))
+	// Attempt to register provider in module
+	if err := ast.AddProvider(modulePath, tokenName, buildFuncName); err != nil {
+		// Partial failure: file created but registration failed
+		fmt.Printf("✓ Created: %s\n", providerPath)
+		fmt.Printf("✗ Registration failed: %v\n", err)
+		fmt.Printf("  Module: %s\n", modulePath)
+		fmt.Printf("  To complete manually, add to Definition().Providers:\n")
+		fmt.Printf("    {Token: %q, Build: %s}\n", tokenName, buildFuncName)
+		return fmt.Errorf("provider registration failed for %q in %s: %w", tokenName, modulePath, err)
+	}
 
-	fmt.Printf("TODO: Register provider in %s:\n", modulePath)
-	fmt.Printf("  Token: %q\n", tokenName)
-	fmt.Printf("  Build: func(r module.Resolver) (any, error) { return New%sService(), nil }\n", data.Identifier)
+	// Success
+	fmt.Printf("✓ Created: %s\n", providerPath)
+	fmt.Printf("✓ Registered in: %s\n", modulePath)
 
 	return nil
 }

@@ -96,6 +96,15 @@ Runs `govulncheck`.
 make test
 ```
 
+### Run CLI Smoke Checks
+
+These are the same checks used by the CI `cli-smoke` job:
+
+```bash
+make cli-smoke-build
+make cli-smoke-scaffold
+```
+
 ### Install Development Tools
 
 ```bash

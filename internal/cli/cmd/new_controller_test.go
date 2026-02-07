@@ -21,7 +21,21 @@ func TestCreateNewController(t *testing.T) {
 	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package userservice\n"), 0o600); err != nil {
+	moduleSrc := `package userservice
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type UserServiceModule struct{}
+
+func (m *UserServiceModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:        "userservice",
+		Providers:   []module.ProviderDef{},
+		Controllers: []module.ControllerDef{},
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte(moduleSrc), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +65,21 @@ func TestCreateNewControllerFromCurrentModuleDir(t *testing.T) {
 	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+	moduleSrc := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type UsersModule struct{}
+
+func (m *UsersModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:        "users",
+		Providers:   []module.ProviderDef{},
+		Controllers: []module.ControllerDef{},
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte(moduleSrc), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Chdir(moduleDir); err != nil {
@@ -104,7 +132,21 @@ func TestCreateNewControllerAlreadyExists(t *testing.T) {
 	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+	moduleSrc := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type UsersModule struct{}
+
+func (m *UsersModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:        "users",
+		Providers:   []module.ProviderDef{},
+		Controllers: []module.ControllerDef{},
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte(moduleSrc), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(filepath.Join(moduleDir, "auth_controller.go"), []byte("package users\n"), 0o600); err != nil {
@@ -145,7 +187,21 @@ func TestCreateNewControllerRunE(t *testing.T) {
 	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+	moduleSrc := `package users
+
+import "github.com/go-modkit/modkit/modkit/module"
+
+type UsersModule struct{}
+
+func (m *UsersModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:        "users",
+		Providers:   []module.ProviderDef{},
+		Controllers: []module.ControllerDef{},
+	}
+}
+`
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte(moduleSrc), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -156,6 +212,28 @@ func TestCreateNewControllerRunE(t *testing.T) {
 	}
 	if err := newControllerCmd.RunE(cmd, []string{"billing"}); err != nil {
 		t.Fatalf("RunE failed: %v", err)
+	}
+}
+
+func TestCreateNewControllerRegistrationFailureReturnsError(t *testing.T) {
+	tmp := t.TempDir()
+	wd, _ := os.Getwd()
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+
+	moduleDir := filepath.Join(tmp, "internal", "modules", "users")
+	if err := os.MkdirAll(moduleDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	err := createNewController("auth", "users")
+	if err == nil {
+		t.Fatal("expected error when controller registration fails")
 	}
 }
 

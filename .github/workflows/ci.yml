@@ -67,5 +67,23 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: .coverage/coverage.out,.coverage/coverage-examples.out
+          files: .coverage/coverage.out
           fail_ci_if_error: false
+
+  cli-smoke:
+    name: CLI Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.7"
+          cache-dependency-path: |
+            tools/tools.go
+            go.mod
+
+      - name: Build CLI
+        run: make cli-smoke-build
+
+      - name: Test CLI scaffolding
+        run: make cli-smoke-scaffold

@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 
-.PHONY: fmt lint vuln test test-coverage test-patch-coverage tools setup-hooks lint-commit
+.PHONY: fmt lint vuln test test-coverage test-patch-coverage tools setup-hooks lint-commit cli-smoke-build cli-smoke-scaffold
 
 GOPATH ?= $(shell go env GOPATH)
 GOIMPORTS ?= $(GOPATH)/bin/goimports
@@ -69,3 +69,15 @@ setup-hooks: tools
 # Validate a commit message (for manual testing)
 lint-commit:
 	@echo "$(MSG)" | $(COMMITLINT) lint
+
+cli-smoke-build:
+	go build -o /tmp/modkit ./cmd/modkit
+
+cli-smoke-scaffold: cli-smoke-build
+	@rm -rf /tmp/cli-test
+	@mkdir -p /tmp/cli-test
+	@cd /tmp/cli-test && /tmp/modkit new app testapp
+	@test -f /tmp/cli-test/testapp/cmd/api/main.go
+	@test -f /tmp/cli-test/testapp/internal/modules/app/module.go
+	@test -f /tmp/cli-test/testapp/go.mod
+	@cd /tmp/cli-test/testapp && go build ./cmd/api
