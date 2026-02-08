@@ -78,9 +78,10 @@ Core steps:
 
 1. Create GitHub App installation token via `actions/create-github-app-token@v2` using org var/secret and owner/repositories scoping.
 2. Checkout `main` with app token.
-3. Run `go-semantic-release/action@v1` with app token and expose released version output.
-4. Run artifact publish job only when semantic release emits a non-empty version.
-5. Publish artifacts from the released tag `v<version>` via `goreleaser/goreleaser-action@v6`.
+3. Verify checked-out `main` commit equals `${{ github.event.workflow_run.head_sha }}`; fail if drifted.
+4. Run `go-semantic-release/action@v1` with app token and expose released version output.
+5. Run artifact publish job only when semantic release emits a non-empty version.
+6. In artifacts job, generate scoped GitHub App token and publish artifacts from released tag `v<version>` via `goreleaser/goreleaser-action@v6`.
 
 Required controls:
 
@@ -121,6 +122,6 @@ Update `docs/guides/release-process.md` to describe:
 1. PRs and pushes to `main` run `ci` with existing caching unchanged.
 2. Codecov upload runs without `CODECOV_TOKEN` and fails CI on upload errors.
 3. Release workflow runs only after successful `ci` on `main` push.
-4. Semantic release runs before artifact publishing and exposes released version output.
-5. Artifact publishing runs only when a semantic version was released and publishes from tag `vX.Y.Z`.
+4. Semantic release runs before artifact publishing, fails on SHA drift from triggering CI run, and exposes released version output.
+5. Artifact publishing runs only when a semantic version was released, uses app-token auth, and publishes from tag `vX.Y.Z`.
 6. GoReleaser publishes assets and generates release notes/changelog using `changelog.use: github`.
