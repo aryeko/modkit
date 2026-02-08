@@ -120,8 +120,8 @@ Errors should be:
 *   [x] **Config Module**: Standard pattern for loading env vars into the container. See `modkit/config` and `docs/specs/design-config-module.md`.
 
 ### Phase 3: Advanced Features
-*   [ ] **Graph Visualization**: Dump the dependency graph to Mermaid/Dot format.
-*   [ ] **Devtools**: Decision pending (currently treated as de-scoped in Nest compatibility docs).
+*   [x] **Graph Visualization**: Export the dependency graph to Mermaid/DOT format via kernel exporters.
+*   [x] **Devtools (Core Scope)**: Finalized as de-scoped from core in v1. See `docs/specs/adr-0001-devtools-core-scope.md`.
 
 ### Remaining Work (Prioritized)
 
@@ -130,9 +130,9 @@ Errors should be:
 2. **P1 - Spec/roadmap synchronization**
    - Reconcile epic/spec checklists and statuses with shipped code so planning docs match reality.
 3. **P2 - Graph visualization (Phase 3)**
-   - Provide graph export output (Mermaid/DOT) for architecture introspection.
+   - Delivered: graph export output (Mermaid/DOT) for architecture introspection.
 4. **P2 - Devtools direction decision (Phase 3)**
-   - Either define a minimal built-in endpoint scope or formally de-scope from PRD to match current guidance.
+   - Delivered: formally de-scoped from core v1 and documented in ADR-0001.
 
 ### Synchronization Summary (2026-02-08)
 
@@ -140,9 +140,10 @@ P1 roadmap/spec synchronization reconciled shipped-state mismatches across roadm
 
 1. `docs/specs/epic-01-examples-enhancement.md`: checklist state updated to reflect delivered hello-mysql capabilities; unresolved route-group follow-ups kept open.
 2. `docs/specs/epic-02-core-nest-compatibility.md`: graceful shutdown, re-export, and compatibility-doc acceptance criteria reconciled to implemented state with evidence-backed checks.
-3. `docs/guides/nestjs-compatibility.md`: matrix wording aligned (CLI = implemented, lifecycle/re-export = implemented, devtools = decision pending).
+3. `docs/guides/nestjs-compatibility.md`: matrix wording aligned (CLI = implemented, lifecycle/re-export = implemented, devtools = de-scoped from core in v1).
 4. `docs/specs/design-release-versioning-sdlc-cli.md`: moved from draft intent to implemented-state checklist for released pipeline artifacts.
 5. `README.md`: guide index reconciled with shipped docs by adding the configuration guide link.
+6. `docs/specs/adr-0001-devtools-core-scope.md`: records the v1 decision to de-scope framework-owned devtools endpoints from core.
 
 ## 8. Success Metrics
 

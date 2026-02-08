@@ -130,7 +130,7 @@ Update `docs/guides/nestjs-compatibility.md` statuses to match current project s
 
 - CLI scaffolding no longer "Not planned"
 - lifecycle/re-export wording moved from "This Epic" to implemented state
-- devtools wording aligned with PRD decision-pending language
+- devtools wording aligned with the finalized PRD/ADR de-scoped-from-core (v1) decision
 
 ### Story P1.4 - SDLC/Release Spec State Update
 

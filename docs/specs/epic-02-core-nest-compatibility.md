@@ -244,7 +244,7 @@ NestJS concepts for Go developers coming from the Node.js ecosystem.
 | | Exception filters | ⏭️ Different | Error handling middleware |
 | **Other** |
 | | CLI scaffolding | ✅ Implemented | `modkit` CLI ships project/module/provider/controller generators |
-| | Devtools | ⏸️ Decision pending | Roadmap item remains open in PRD (P2 decision) |
+| | Devtools | ⏭️ Different | De-scoped from modkit core in v1; use standard Go tooling or optional adapters |
 | | Microservices | ❌ Not planned | Out of scope |
 | | WebSockets | ❌ Not planned | Use gorilla/websocket directly |
 | | GraphQL | ❌ Not planned | Use gqlgen directly |
