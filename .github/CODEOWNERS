@@ -1,0 +1,22 @@
+# Default owner for everything
+* @aryekogan
+
+# Core framework packages
+modkit/kernel/ @aryekogan
+modkit/module/ @aryekogan
+modkit/http/ @aryekogan
+modkit/config/ @aryekogan
+modkit/logging/ @aryekogan
+modkit/testkit/ @aryekogan
+
+# CLI tooling
+cmd/modkit/ @aryekogan
+internal/cli/ @aryekogan
+
+# CI and configuration
+.github/ @aryekogan
+.golangci.yml @aryekogan
+.goreleaser.yml @aryekogan
+
+# Documentation
+docs/ @aryekogan

@@ -1,0 +1,21 @@
+title: "[Show & Tell] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share what you've built with modkit! We'd love to see your projects, modules, and patterns.
+  - type: textarea
+    id: description
+    attributes:
+      label: What did you build?
+      description: Describe your project or share a link.
+    validations:
+      required: true
+  - type: textarea
+    id: highlights
+    attributes:
+      label: Highlights
+      description: What modkit features or patterns did you find most useful?
+    validations:
+      required: false

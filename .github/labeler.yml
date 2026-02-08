@@ -1,0 +1,55 @@
+# Auto-label PRs based on changed file paths
+# Used by .github/workflows/labeler.yml
+
+"area: kernel":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/kernel/**"
+
+"area: module":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/module/**"
+
+"area: http":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/http/**"
+
+"area: config":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/config/**"
+
+"area: logging":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/logging/**"
+
+"area: testkit":
+  - changed-files:
+      - any-glob-to-any-file: "modkit/testkit/**"
+
+"area: cli":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "cmd/modkit/**"
+          - "internal/cli/**"
+
+"area: examples":
+  - changed-files:
+      - any-glob-to-any-file: "examples/**"
+
+"type: docs":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "docs/**"
+          - "**/*.md"
+
+"type: ci":
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/workflows/**"
+          - ".golangci.yml"
+          - ".goreleaser.yml"
+          - "codecov.yml"
+          - "Makefile"
+
+"type: testing":
+  - changed-files:
+      - any-glob-to-any-file: "**/*_test.go"
