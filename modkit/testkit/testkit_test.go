@@ -84,6 +84,9 @@ func TestNewE_BootstrapsHarness(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewE failed: %v", err)
 	}
+	if h.App() == nil {
+		t.Fatal("expected app to be set")
+	}
 
 	got, err := testkit.GetE[string](h, token)
 	if err != nil {
@@ -99,6 +102,32 @@ func TestNewE_BootstrapsHarness(t *testing.T) {
 	}
 	if controller != "ok" {
 		t.Fatalf("unexpected controller value: %v", controller)
+	}
+}
+
+func TestOverrideBuild_HelperWorks(t *testing.T) {
+	token := module.Token("svc.token")
+	root := mod(
+		[]module.ProviderDef{{
+			Token: token,
+			Build: func(module.Resolver) (any, error) { return "real", nil },
+		}},
+		nil,
+		[]module.Token{token},
+	)
+
+	h, err := testkit.NewE(t, root, testkit.WithOverrides(
+		testkit.OverrideBuild(token, func(module.Resolver) (any, error) {
+			return "built", nil
+		}),
+	))
+	if err != nil {
+		t.Fatalf("NewE failed: %v", err)
+	}
+
+	got := testkit.Get[string](t, h, token)
+	if got != "built" {
+		t.Fatalf("unexpected value: %v", got)
 	}
 }
 
@@ -156,6 +185,70 @@ func TestGetE_ReturnsTypeAssertionError(t *testing.T) {
 	}
 
 	_, err = testkit.GetE[string](h, token)
+	if err == nil {
+		t.Fatal("expected type assertion error")
+	}
+
+	var typeErr *testkit.TypeAssertionError
+	if !errors.As(err, &typeErr) {
+		t.Fatalf("unexpected error type: %T", err)
+	}
+}
+
+func TestGet_UsesFatalfOnError(t *testing.T) {
+	token := module.Token("svc.token")
+	root := mod(nil, nil, nil)
+
+	h, err := testkit.NewE(t, root)
+	if err != nil {
+		t.Fatalf("NewE failed: %v", err)
+	}
+
+	tb := &tbStub{}
+	got := testkit.Get[string](tb, h, token)
+	if got != "" {
+		t.Fatalf("expected zero value, got %q", got)
+	}
+	if !tb.failed {
+		t.Fatal("expected Fatalf to be called")
+	}
+}
+
+func TestController_UsesFatalfOnError(t *testing.T) {
+	root := mod(nil, nil, nil)
+	h, err := testkit.NewE(t, root)
+	if err != nil {
+		t.Fatalf("NewE failed: %v", err)
+	}
+
+	tb := &tbStub{}
+	got := testkit.Controller[string](tb, h, "root", "Missing")
+	if got != "" {
+		t.Fatalf("expected zero value, got %q", got)
+	}
+	if !tb.failed {
+		t.Fatal("expected Fatalf to be called")
+	}
+}
+
+func TestControllerE_ReturnsTypeAssertionError(t *testing.T) {
+	root := mod(
+		nil,
+		[]module.ControllerDef{{
+			Name: "Controller",
+			Build: func(module.Resolver) (any, error) {
+				return 123, nil
+			},
+		}},
+		nil,
+	)
+
+	h, err := testkit.NewE(t, root)
+	if err != nil {
+		t.Fatalf("NewE failed: %v", err)
+	}
+
+	_, err = testkit.ControllerE[string](h, "root", "Controller")
 	if err == nil {
 		t.Fatal("expected type assertion error")
 	}
