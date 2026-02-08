@@ -1,6 +1,6 @@
 module github.com/go-modkit/modkit
 
-go 1.25
+go 1.25.7
 
 require (
 	github.com/conventionalcommit/commitlint v0.10.1
@@ -11,7 +11,6 @@ require (
 	github.com/seriousben/go-patch-cover v0.2.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/text v0.33.0
 	golang.org/x/tools v0.41.0
 	golang.org/x/vuln v1.1.4
 )
@@ -234,6 +233,7 @@ require (
 	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260109210033-bd525da824e2 // indirect
 	golang.org/x/term v0.39.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/tools/go/expect v0.1.1-deprecated // indirect
 	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
