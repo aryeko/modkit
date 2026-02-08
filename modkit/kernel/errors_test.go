@@ -11,6 +11,8 @@ func TestKernelErrorStrings(t *testing.T) {
 		err  error
 	}{
 		{"NilGraph", ErrNilGraph},
+		{"NilApp", ErrNilApp},
+		{"UnsupportedGraphFormat", &UnsupportedGraphFormatError{Format: GraphFormat("json")}},
 		{"RootModuleNil", &RootModuleNilError{}},
 		{"InvalidModuleName", &InvalidModuleNameError{Name: "mod"}},
 		{"ModuleNotPointer", &ModuleNotPointerError{Module: "mod"}},
