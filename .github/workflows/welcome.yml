@@ -1,0 +1,34 @@
+name: Welcome
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
+            Thanks for opening your first issue! We appreciate you taking the time to report this.
+
+            A maintainer will review it soon. In the meantime:
+            - Check the [documentation](https://pkg.go.dev/github.com/go-modkit/modkit) for guidance
+            - Browse [existing discussions](https://github.com/go-modkit/modkit/discussions) for related topics
+          pr-message: |
+            Thanks for your first pull request! We're excited to review your contribution.
+
+            Please make sure:
+            - [ ] Tests pass (`make test`)
+            - [ ] Linter is happy (`make lint`)
+            - [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/)
+
+            See [CONTRIBUTING.md](https://github.com/go-modkit/modkit/blob/main/CONTRIBUTING.md) for details.

@@ -6,8 +6,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-modkit/modkit)](https://goreportcard.com/report/github.com/go-modkit/modkit)
 ![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/go-modkit/modkit?utm_source=oss&utm_medium=github&utm_campaign=go-modkit%2Fmodkit&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Status: Alpha](https://img.shields.io/badge/status-alpha-orange)
 
 **A Go framework for building modular backend services, inspired by NestJS.**
+
+> **Note:** modkit is in **early development**. APIs may change before v1.0. After v1.0, changes will follow semantic versioning.
 
 modkit brings NestJS-style module organization to Go—without reflection, decorators, or magic. Define modules with explicit imports, providers, controllers, and exports. The kernel builds a dependency graph, enforces visibility, and bootstraps your app deterministically.
 
@@ -243,12 +246,6 @@ See [Architecture Guide](docs/architecture.md) for details.
 | Middleware | `NestMiddleware` interface | `func(http.Handler) http.Handler` |
 | Guards/Pipes/Interceptors | Framework abstractions | Standard Go middleware |
 
-## Status
-
-modkit is in **early development**. APIs may change before v0.1.0.
-
-After v0.1.0, changes will follow semantic versioning.
-
 ## Community
 
 Questions? Start a [Discussion](https://github.com/go-modkit/modkit/discussions).
@@ -256,6 +253,12 @@ Questions? Start a [Discussion](https://github.com/go-modkit/modkit/discussions)
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome issues, discussions, and PRs.
+
+## Contributors
+
+<a href="https://github.com/go-modkit/modkit/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=go-modkit/modkit" alt="Contributors" />
+</a>
 
 ## License
 

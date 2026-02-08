@@ -1,0 +1,22 @@
+title: "[Idea] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your ideas for improving modkit! Feature requests with more detail
+        should use the [feature request issue template](https://github.com/go-modkit/modkit/issues/new?template=feature_request.md) instead.
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea
+      description: Describe your idea or suggestion.
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why would this be useful? What problem does it solve?
+    validations:
+      required: false
