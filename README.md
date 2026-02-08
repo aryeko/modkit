@@ -1,4 +1,4 @@
-# modkit
+# <img src="https://raw.githubusercontent.com/go-modkit/modkit/main/assets/branding/stacked-modules/modkit-square-512.png" alt="modkit logo" width="32" height="32" align="absmiddle" /> modkit
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-modkit/modkit.svg)](https://pkg.go.dev/github.com/go-modkit/modkit)
 [![CI](https://github.com/go-modkit/modkit/actions/workflows/ci.yml/badge.svg)](https://github.com/go-modkit/modkit/actions/workflows/ci.yml)
@@ -13,6 +13,26 @@
 > **Note:** modkit is in **early development**. APIs may change before v1.0. After v1.0, changes will follow semantic versioning.
 
 modkit brings NestJS-style module organization to Go—without reflection, decorators, or magic. Define modules with explicit imports, providers, controllers, and exports. The kernel builds a dependency graph, enforces visibility, and bootstraps your app deterministically.
+
+> **⭐ If modkit helps you build modular services, consider [giving it a star](https://github.com/go-modkit/modkit)!**
+
+## What it does
+
+**modkit** takes module definitions and deterministically bootstraps a dependency graph into runnable controllers:
+
+```mermaid
+flowchart LR
+    A["Module definitions\n(imports, providers, controllers, exports)"] --> B["Kernel\n(graph + visibility)"]
+    B --> C["Container\n(lazy singletons)"]
+    C --> D["Controllers"]
+    D --> E["HTTP adapter\n(chi router)"]
+```
+
+- **Module system**: explicit `imports` / `exports` boundaries
+- **Explicit DI**: resolve via tokens (`module.Get[T](r, token)`), no reflection
+- **Visibility enforcement**: only exported tokens are accessible to importers
+- **Deterministic bootstrap**: predictable init order with clear errors
+- **Thin HTTP adapter**: register controllers on a `chi` router
 
 ## Why modkit?
 
@@ -36,46 +56,9 @@ modkit is a Go-idiomatic alternative to decorator-driven frameworks. It keeps wi
 
 See the [full comparison](docs/guides/comparison.md) for details.
 
-## Quick Example
+## Requirements
 
-```go
-// Define a module
-type UsersModule struct{}
-
-func (m *UsersModule) Definition() module.ModuleDef {
-    return module.ModuleDef{
-        Name: "users",
-        Providers: []module.ProviderDef{{
-            Token: "users.service",
-            Build: func(r module.Resolver) (any, error) {
-                return NewUsersService(), nil
-            },
-        }},
-        Controllers: []module.ControllerDef{{
-            Name: "UsersController",
-            Build: func(r module.Resolver) (any, error) {
-                svc, err := module.Get[UsersService](r, "users.service")
-                if err != nil {
-                    return nil, err
-                }
-                return NewUsersController(svc), nil
-            },
-        }},
-        Exports: []module.Token{"users.service"},
-    }
-}
-
-// Bootstrap and serve
-func main() {
-    app, err := kernel.Bootstrap(&UsersModule{})
-    if err != nil {
-        log.Fatal(err)
-    }
-    router := mkhttp.NewRouter()
-    mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
-    mkhttp.Serve(":8080", router)
-}
-```
+- Go 1.25.7+
 
 ## Installation
 
@@ -95,10 +78,7 @@ go install github.com/go-modkit/modkit/cmd/modkit@latest
 
 Or download a pre-built binary from the [releases page](https://github.com/go-modkit/modkit/releases).
 
-Requires Go 1.25.7+
-We pin the patch level to 1.25.7 in CI to align with vulnerability scanning and keep a consistent security posture.
-
-## Quick Start with CLI
+## Quickstart (CLI)
 
 Scaffold a new modkit application in seconds:
 
@@ -144,6 +124,47 @@ modkit new controller users
 ```
 
 The CLI automatically registers providers and controllers in your module's `Definition()` function.
+
+## Quick Example
+
+```go
+// Define a module
+type UsersModule struct{}
+
+func (m *UsersModule) Definition() module.ModuleDef {
+    return module.ModuleDef{
+        Name: "users",
+        Providers: []module.ProviderDef{{
+            Token: "users.service",
+            Build: func(r module.Resolver) (any, error) {
+                return NewUsersService(), nil
+            },
+        }},
+        Controllers: []module.ControllerDef{{
+            Name: "UsersController",
+            Build: func(r module.Resolver) (any, error) {
+                svc, err := module.Get[UsersService](r, "users.service")
+                if err != nil {
+                    return nil, err
+                }
+                return NewUsersController(svc), nil
+            },
+        }},
+        Exports: []module.Token{"users.service"},
+    }
+}
+
+// Bootstrap and serve
+func main() {
+    app, err := kernel.Bootstrap(&UsersModule{})
+    if err != nil {
+        log.Fatal(err)
+    }
+    router := mkhttp.NewRouter()
+    mkhttp.RegisterRoutes(mkhttp.AsRouter(router), app.Controllers)
+    mkhttp.Serve(":8080", router)
+}
+```
 
 ## Features
 
@@ -245,6 +266,27 @@ See [Architecture Guide](docs/architecture.md) for details.
 | Route binding | `@Get()`, `@Post()` decorators | `RegisterRoutes(router)` method |
 | Middleware | `NestMiddleware` interface | `func(http.Handler) http.Handler` |
 | Guards/Pipes/Interceptors | Framework abstractions | Standard Go middleware |
+
+## Support
+
+- **Questions / ideas**: use [GitHub Discussions](https://github.com/go-modkit/modkit/discussions)
+- **Bugs / feature requests**: open a [GitHub Issue](https://github.com/go-modkit/modkit/issues/new/choose)
+- **Security**: see [SECURITY.md](SECURITY.md)
+
+## Branding
+
+Branding assets (logo + social preview images) are in
+[`assets/branding/stacked-modules/`](assets/branding/stacked-modules/).
+
+## Development
+
+```bash
+make fmt
+make lint
+make vuln
+make test
+make test-coverage
+```
 
 ## Community
 
