@@ -12,7 +12,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -23,14 +22,7 @@ import (
 )
 
 func exportGraphForExample(app *kernel.App, format string) (string, error) {
-	switch strings.ToLower(format) {
-	case "mermaid":
-		return kernel.ExportAppGraph(app, kernel.GraphFormatMermaid)
-	case "dot":
-		return kernel.ExportAppGraph(app, kernel.GraphFormatDOT)
-	default:
-		return "", fmt.Errorf("unsupported graph format %q (expected mermaid or dot)", format)
-	}
+	return kernel.ExportAppGraph(app, kernel.GraphFormat(strings.ToLower(format)))
 }
 
 // Tokens identify providers

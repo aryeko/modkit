@@ -104,26 +104,46 @@ func TestExportGraphForExample(t *testing.T) {
 		t.Fatalf("Bootstrap failed: %v", err)
 	}
 
-	t.Run("mermaid", func(t *testing.T) {
-		out, err := exportGraphForExample(app, "mermaid")
-		assert.NoError(t, err)
-		assert.Contains(t, out, "graph TD")
-		assert.Contains(t, out, "m0[\"app\"]")
-	})
+	tests := []struct {
+		name         string
+		format       string
+		wantContains []string
+		wantErr      bool
+		errContains  string
+	}{
+		{
+			name:         "mermaid",
+			format:       "mermaid",
+			wantContains: []string{"graph TD", "m0[\"app\"]"},
+		},
+		{
+			name:         "dot",
+			format:       "dot",
+			wantContains: []string{"digraph modkit {", "\"app\" [shape=doublecircle];"},
+		},
+		{
+			name:        "invalid format",
+			format:      "json",
+			wantErr:     true,
+			errContains: "unsupported graph format",
+		},
+	}
 
-	t.Run("dot", func(t *testing.T) {
-		out, err := exportGraphForExample(app, "dot")
-		assert.NoError(t, err)
-		assert.Contains(t, out, "digraph modkit {")
-		assert.Contains(t, out, "\"app\" [shape=doublecircle];")
-	})
-
-	t.Run("invalid format", func(t *testing.T) {
-		out, err := exportGraphForExample(app, "json")
-		assert.Error(t, err)
-		assert.Empty(t, out)
-		assert.Contains(t, err.Error(), "expected mermaid or dot")
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := exportGraphForExample(app, tt.format)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, out)
+				assert.Contains(t, err.Error(), tt.errContains)
+				return
+			}
+			assert.NoError(t, err)
+			for _, needle := range tt.wantContains {
+				assert.Contains(t, out, needle)
+			}
+		})
+	}
 }
 
 func TestAppModule_TestKitOverrideGreeting(t *testing.T) {
