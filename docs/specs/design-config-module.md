@@ -1,13 +1,16 @@
 # Design Spec: modkit Core Config Module
 
-**Status:** Draft
+**Status:** Implemented (v1)
 **Date:** 2026-02-07
 **Author:** Sisyphus (AI Agent)
 **Related PRD:** `docs/specs/prd-modkit-core.md` (Phase 2 `Config Module`)
+**Last Reviewed:** 2026-02-08
 
 ## 1. Overview
 
 This document specifies a reusable Config Module for core `modkit`.
+
+Implementation note (2026-02-08): core package `modkit/config`, guide `docs/guides/configuration.md`, and example integration in `examples/hello-mysql/internal/modules/config` are now in place for v1 scope.
 
 Today, configuration loading exists only in example apps (`examples/hello-mysql/internal/config` and `examples/hello-mysql/internal/platform/config`). This spec defines a standard, reusable way to load typed configuration from environment variables into the DI container while preserving modkit constraints: explicit wiring, deterministic behavior, typed errors, and no reflection magic.
 

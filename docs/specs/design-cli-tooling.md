@@ -1,16 +1,17 @@
 # Design Spec: modkit CLI Remaining Work
 
-**Status:** Draft
+**Status:** Implemented (v1)
 **Date:** 2026-02-07
 **Author:** Sisyphus (AI Agent)
 **Related PRD:** `docs/specs/prd-modkit-core.md` (Phase 2 `modkit-cli`)
 **Related Spec:** `docs/specs/design-release-versioning-sdlc-cli.md`
+**Last Reviewed:** 2026-02-08
 
 ## 1. Overview
 
-This document defines the remaining work required to complete the PRD `modkit-cli` item.
+This document records the remaining work that was required to complete the PRD `modkit-cli` item.
 
-The repository already contains a working CLI skeleton and scaffolding commands. The remaining work is to make scaffolding fully usable without manual follow-up edits, make behavior idempotent and safe, and close SDLC/documentation gaps.
+The repository already contains a working CLI skeleton and scaffolding commands. The previously listed gaps (auto-registration, idempotency/safety, CI smoke, docs/release alignment) have been delivered.
 
 ## 2. Current State (Implemented)
 
@@ -27,12 +28,14 @@ The following are already implemented and tested:
   - `modkit new controller`: `internal/cli/cmd/new_controller.go`
 - Embedded template infrastructure:
   - `internal/cli/templates/embed.go`
-- AST helper for provider registration (currently unused by command flow):
+- AST helpers for provider/controller registration (used by command flow):
   - `internal/cli/ast/modify.go`
 - Unit tests for command behaviors:
   - `internal/cli/cmd/new_*_test.go`
 
-## 3. Problem Statement (Remaining Gaps)
+## 3. Problem Statement (Historical - Resolved)
+
+All items in this section are kept as historical context and have been addressed in current mainline code.
 
 ### 3.1. Manual Registration Still Required
 
