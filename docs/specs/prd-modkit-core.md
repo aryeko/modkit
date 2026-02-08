@@ -1,9 +1,10 @@
 # Product Requirement Document: modkit Core Framework
 
-**Status:** Draft
+**Status:** Active
 **Version:** 0.1.0
 **Date:** 2026-02-07
 **Author:** Sisyphus (AI Agent)
+**Last Reviewed:** 2026-02-08
 
 ---
 
@@ -114,13 +115,24 @@ Errors should be:
 *   [x] Generic Helpers: Reduce type-casting noise with `module.Get[T]` helper.
 
 ### Phase 2: Ecosystem & Tooling (Next)
-*   [ ] **modkit-cli**: Scaffold new projects, modules, and providers (`modkit new module users`). Status: in progress (partial). See `docs/specs/design-cli-tooling.md`.
+*   [x] **modkit-cli**: Scaffold new projects, modules, and providers (`modkit new module users`). Delivered with auto-registration + CI smoke checks + release artifacts.
 *   [ ] **TestKit**: Utilities for testing modules in isolation (mocking providers easily).
-*   [ ] **Config Module**: Standard pattern for loading env vars into the container. Spec: `docs/specs/design-config-module.md`.
+*   [x] **Config Module**: Standard pattern for loading env vars into the container. See `modkit/config` and `docs/specs/design-config-module.md`.
 
 ### Phase 3: Advanced Features
 *   [ ] **Graph Visualization**: Dump the dependency graph to Mermaid/Dot format.
-*   [ ] **Devtools**: A debug endpoint to inspect running modules and provider states.
+*   [ ] **Devtools**: Decision pending (currently treated as de-scoped in Nest compatibility docs).
+
+### Remaining Work (Prioritized)
+
+1. **P0 - TestKit (Phase 2)**
+   - Deliver a focused test utility package for module-isolation tests with provider override/mocking support.
+2. **P1 - Spec/roadmap synchronization**
+   - Reconcile epic/spec checklists and statuses with shipped code so planning docs match reality.
+3. **P2 - Graph visualization (Phase 3)**
+   - Provide graph export output (Mermaid/DOT) for architecture introspection.
+4. **P2 - Devtools direction decision (Phase 3)**
+   - Either define a minimal built-in endpoint scope or formally de-scope from PRD to match current guidance.
 
 ## 8. Success Metrics
 
