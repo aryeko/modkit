@@ -6,13 +6,6 @@ on:
       - main
   pull_request:
 
-permissions:
-  contents: read
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   pr-title:
     name: Validate PR Title
@@ -71,7 +64,6 @@ jobs:
       - name: Test with coverage
         run: make test-coverage
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

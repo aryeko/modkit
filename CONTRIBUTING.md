@@ -108,10 +108,15 @@ make cli-smoke-scaffold
 ### Install Development Tools
 
 ```bash
-make tools
-```
+# goimports (for make fmt)
+go install golang.org/x/tools/cmd/goimports@latest
 
-`make tools` installs tool versions pinned by the repository.
+# golangci-lint (for make lint)
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# govulncheck (for make vuln)
+go install golang.org/x/vuln/cmd/govulncheck@latest
+```
 
 ## Contribution Guidelines
 
@@ -126,8 +131,7 @@ make tools
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feat/my-feature`)
 3. Make your changes with tests
-4. Run `make fmt && make lint && make vuln && make test && make test-coverage`
-   - Also run CLI gate: `make cli-smoke-build && make cli-smoke-scaffold`
+4. Run `make fmt && make lint && make test`
 5. Commit with a conventional prefix (`feat:`, `fix:`, `docs:`, `chore:`)
 6. Open a pull request with a clear description
 
