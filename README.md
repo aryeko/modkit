@@ -208,6 +208,7 @@ See [Architecture Guide](docs/architecture.md) for details.
 **Guides:**
 - [Getting Started](docs/guides/getting-started.md) — Your first modkit app
 - [Modules](docs/guides/modules.md) — Module composition and visibility
+- [Graph Visualization](docs/guides/graph-visualization.md) — Export module graph as Mermaid or DOT
 - [Providers](docs/guides/providers.md) — Dependency injection patterns
 - [Lifecycle](docs/guides/lifecycle.md) — Provider lifecycle and cleanup
 - [Controllers](docs/guides/controllers.md) — HTTP handlers and routing

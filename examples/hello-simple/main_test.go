@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-modkit/modkit/modkit/kernel"
 	"github.com/go-modkit/modkit/modkit/module"
 	"github.com/go-modkit/modkit/modkit/testkit"
 	"github.com/stretchr/testify/assert"
@@ -95,6 +96,54 @@ func TestAppModule_Providers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.IsType(t, &Counter{}, val)
 	})
+}
+
+func TestExportGraphForExample(t *testing.T) {
+	app, err := kernel.Bootstrap(NewAppModule("test message"))
+	if err != nil {
+		t.Fatalf("Bootstrap failed: %v", err)
+	}
+
+	tests := []struct {
+		name         string
+		format       string
+		wantContains []string
+		wantErr      bool
+		errContains  string
+	}{
+		{
+			name:         "mermaid",
+			format:       "mermaid",
+			wantContains: []string{"graph TD", "m0[\"app\"]"},
+		},
+		{
+			name:         "dot",
+			format:       "dot",
+			wantContains: []string{"digraph modkit {", "\"app\" [shape=doublecircle];"},
+		},
+		{
+			name:        "invalid format",
+			format:      "json",
+			wantErr:     true,
+			errContains: "unsupported graph format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := exportGraphForExample(app, tt.format)
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Empty(t, out)
+				assert.Contains(t, err.Error(), tt.errContains)
+				return
+			}
+			assert.NoError(t, err)
+			for _, needle := range tt.wantContains {
+				assert.Contains(t, out, needle)
+			}
+		})
+	}
 }
 
 func TestAppModule_TestKitOverrideGreeting(t *testing.T) {

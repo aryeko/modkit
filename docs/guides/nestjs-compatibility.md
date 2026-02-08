@@ -43,7 +43,7 @@ This guide maps NestJS concepts to modkit equivalents (or intentional difference
 |  | Exception filters | ⏭️ Different | Error handling middleware |
 | **Other** |  |  |  |
 |  | CLI scaffolding | ✅ Implemented | `modkit` CLI ships scaffolding commands for apps/modules/providers/controllers |
-|  | Devtools | ⏸️ Decision pending | Listed as a P2 decision in the PRD roadmap |
+|  | Devtools | ⏭️ Different | De-scoped from modkit core in v1; use standard Go tooling or optional adapters |
 |  | Microservices | ❌ Not planned | Out of scope |
 |  | WebSockets | ❌ Not planned | Use gorilla/websocket directly |
 |  | GraphQL | ❌ Not planned | Use gqlgen directly |
@@ -256,9 +256,9 @@ router.Use(RecoverErrors)
 
 **NestJS:** Framework-specific devtools for inspection and hot reload.
 
-**modkit:** Decision pending.
+**modkit:** De-scoped from core in v1.
 
-**Justification:** The PRD tracks devtools as a P2 decision. Current guidance remains to rely on standard Go tooling until a concrete built-in devtools scope is accepted.
+**Justification:** Core keeps a minimal API surface and avoids framework-owned debug endpoint security/maintenance burden. The v1 decision is documented in `docs/specs/adr-0001-devtools-core-scope.md`.
 
 **Alternative:** Use standard tooling like `pprof` and `delve`.
 

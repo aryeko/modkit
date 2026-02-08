@@ -11,13 +11,19 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
+	"strings"
 
 	mkhttp "github.com/go-modkit/modkit/modkit/http"
 	"github.com/go-modkit/modkit/modkit/kernel"
 	"github.com/go-modkit/modkit/modkit/module"
 )
+
+func exportGraphForExample(app *kernel.App, format string) (string, error) {
+	return kernel.ExportAppGraph(app, kernel.GraphFormat(strings.ToLower(format)))
+}
 
 // Tokens identify providers
 const (
@@ -113,6 +119,9 @@ func (m *AppModule) Definition() module.ModuleDef {
 }
 
 func main() {
+	graphFormat := flag.String("graph-format", "", "print module graph format: mermaid or dot")
+	flag.Parse()
+
 	// Create and bootstrap the app module
 	appModule := NewAppModule("Hello from modkit!")
 
@@ -127,8 +136,18 @@ func main() {
 		log.Fatalf("Failed to register routes: %v", err)
 	}
 
+	if *graphFormat != "" {
+		graph, err := exportGraphForExample(app, *graphFormat)
+		if err != nil {
+			log.Fatalf("Failed to export graph: %v", err)
+		}
+		log.Printf("Module graph (%s):\n%s", strings.ToLower(*graphFormat), graph)
+	}
+
 	// Start server
 	log.Println("Server starting on http://localhost:8080")
+	log.Println("Optional: go run main.go --graph-format mermaid")
+	log.Println("Optional: go run main.go --graph-format dot")
 	log.Println("Try: curl http://localhost:8080/greet")
 	log.Println("Try: curl http://localhost:8080/health")
 
