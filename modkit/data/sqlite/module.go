@@ -13,7 +13,10 @@ import (
 	"github.com/go-modkit/modkit/modkit/module"
 )
 
-const driverName = "sqlite3"
+const (
+	driverName     = "sqlite3"
+	moduleNameBase = "data.sqlite"
+)
 
 // Options configures a SQLite provider module.
 type Options struct {
@@ -45,19 +48,12 @@ func (m *Module) Definition() module.ModuleDef {
 
 	toks, err := sqlmodule.NamedTokens(m.opts.Name)
 	if err != nil {
-		return module.ModuleDef{
-			Name:    "data.sqlite",
-			Imports: []module.Module{configMod},
-			Providers: []module.ProviderDef{{
-				Token: "data.sqlite.invalid",
-				Build: func(_ module.Resolver) (any, error) { return nil, err },
-			}},
-		}
+		return invalidModuleDef(err)
 	}
 
 	var db *sql.DB
 	return module.ModuleDef{
-		Name:    "data.sqlite",
+		Name:    moduleName(m.opts.Name),
 		Imports: []module.Module{configMod},
 		Providers: []module.ProviderDef{
 			{
@@ -82,6 +78,25 @@ func (m *Module) Definition() module.ModuleDef {
 			},
 		},
 		Exports: []module.Token{toks.DB, toks.Dialect},
+	}
+}
+
+func moduleName(name string) string {
+	if name == "" {
+		return moduleNameBase
+	}
+	return moduleNameBase + "." + name
+}
+
+func invalidModuleDef(err error) module.ModuleDef {
+	return module.ModuleDef{
+		Name: moduleNameBase + ".invalid",
+		Controllers: []module.ControllerDef{{
+			Name: "InvalidSQLiteModule",
+			Build: func(_ module.Resolver) (any, error) {
+				return nil, err
+			},
+		}},
 	}
 }
 

@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/go-modkit/modkit/modkit/data/sqlmodule"
+	"github.com/go-modkit/modkit/modkit/kernel"
+	"github.com/go-modkit/modkit/modkit/module"
 	"github.com/go-modkit/modkit/modkit/testkit"
 )
 
@@ -268,5 +270,73 @@ func TestCleanupClosesDB(t *testing.T) {
 	_, _, closed, _, _ := testDrv.Snapshot()
 	if closed == 0 {
 		t.Fatalf("expected cleanup to close a DB connection")
+	}
+}
+
+func TestMultipleSQLiteInstancesBootstrap(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("SQLITE_PATH", "file:memdb1?mode=memory&cache=shared")
+	t.Setenv("SQLITE_CONNECT_TIMEOUT", "0")
+
+	primaryTokens, err := sqlmodule.NamedTokens("primary")
+	if err != nil {
+		t.Fatalf("primary tokens: %v", err)
+	}
+	analyticsTokens, err := sqlmodule.NamedTokens("analytics")
+	if err != nil {
+		t.Fatalf("analytics tokens: %v", err)
+	}
+
+	root := &multiInstanceRootModule{
+		imports: []module.Module{
+			NewModule(Options{Name: "primary"}),
+			NewModule(Options{Name: "analytics"}),
+		},
+		exports: []module.Token{
+			primaryTokens.DB,
+			primaryTokens.Dialect,
+			analyticsTokens.DB,
+			analyticsTokens.Dialect,
+		},
+	}
+	app, err := kernel.Bootstrap(root)
+	if err != nil {
+		t.Fatalf("bootstrap: %v", err)
+	}
+
+	if _, err := app.Get(primaryTokens.DB); err != nil {
+		t.Fatalf("primary db: %v", err)
+	}
+	if _, err := app.Get(analyticsTokens.DB); err != nil {
+		t.Fatalf("analytics db: %v", err)
+	}
+}
+
+func TestInvalidNameFailsAtBootstrap(t *testing.T) {
+	root := &multiInstanceRootModule{
+		imports: []module.Module{
+			NewModule(Options{Name: "bad name"}),
+		},
+	}
+	_, err := kernel.Bootstrap(root)
+	if err == nil {
+		t.Fatal("expected bootstrap error")
+	}
+	var invalidNameErr *sqlmodule.InvalidNameError
+	if !errors.As(err, &invalidNameErr) {
+		t.Fatalf("expected InvalidNameError, got %T", err)
+	}
+}
+
+type multiInstanceRootModule struct {
+	imports []module.Module
+	exports []module.Token
+}
+
+func (m *multiInstanceRootModule) Definition() module.ModuleDef {
+	return module.ModuleDef{
+		Name:    "root",
+		Imports: m.imports,
+		Exports: m.exports,
 	}
 }
