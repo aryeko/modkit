@@ -66,6 +66,13 @@ const (
     TokenDialect module.Token = "database.dialect"
 )
 
+type Tokens struct {
+    DB      module.Token
+    Dialect module.Token
+}
+
+func NamedTokens(name string) Tokens
+
 type Dialect string
 
 const (
@@ -75,7 +82,15 @@ const (
 )
 ```
 
-Rationale: this avoids token drift and gives feature modules one stable import path.
+`NamedTokens(name)` contract:
+
+1. `name == ""` returns default tokens (`TokenDB`, `TokenDialect`).
+2. non-empty `name` returns deterministic namespaced tokens:
+   - `database.<name>.db`
+   - `database.<name>.dialect`
+3. invalid names (empty after trim or containing spaces) return typed validation errors at module construction time.
+
+Rationale: this avoids token drift, preserves a stable default path, and prevents token collisions for multi-instance apps.
 
 ### 6.2 Driver Modules
 
@@ -96,12 +111,20 @@ Both modules:
 ```go
 type Options struct {
     Config module.Module
+    Name   string
 }
 
 func NewModule(opts Options) module.Module
 ```
 
 Semantics follow existing pattern used by `auth` and `database` modules in examples.
+
+`Name` controls token namespace:
+
+1. empty name uses default tokens (`database.db`, `database.dialect`),
+2. non-empty name uses `NamedTokens(name)`.
+
+This is the modkit equivalent of NestJS named connections while keeping explicit tokens.
 
 ## 7. Configuration Contract
 
@@ -144,6 +167,9 @@ Behavior requirements:
 1. Provider remains lazy singleton.
 2. Cleanup remains LIFO through existing kernel lifecycle.
 3. Visibility remains unchanged; only exported tokens are reachable.
+4. "Fail fast" means provider `Build` must validate connectivity using `db.PingContext(ctx)` before returning success.
+5. Ping timeout must be explicit and configurable (for example `POSTGRES_CONNECT_TIMEOUT`, `SQLITE_CONNECT_TIMEOUT`).
+6. Ping failures return typed provider build errors with wrapped root cause and token context.
 
 ## 9. Modular Alignment Check and Suggested Improvements
 
@@ -170,12 +196,17 @@ Per driver module:
 1. Build fails with missing required config.
 2. Build returns `*sql.DB` and correct dialect token.
 3. Cleanup handles nil/closed DB safely.
+4. `NamedTokens("")` returns default tokens.
+5. `NamedTokens("analytics")` returns deterministic namespaced tokens.
+6. Invalid names fail with typed errors.
 
 ### 10.2 Integration Tests
 
 1. Postgres: testcontainers-backed smoke test validates bootstrap + simple query.
 2. SQLite: file-backed and in-memory smoke tests validate bootstrap + CRUD roundtrip.
 3. Visibility test ensures only exported DB tokens are visible to importers.
+4. Multi-instance smoke test validates two SQL modules can coexist without token collision.
+5. Docker-required tests are skipped deterministically when Docker is unavailable.
 
 ### 10.3 Compatibility Tests
 
@@ -220,6 +251,7 @@ This phase is complete when all are true:
 3. At least one Postgres example and one SQLite example are runnable.
 4. Existing MySQL path remains backward-compatible.
 5. CI includes smoke coverage for new example paths.
+6. Multi-instance named-token path is documented and covered by tests.
 
 ## 14. Risks and Mitigations
 

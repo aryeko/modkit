@@ -63,6 +63,13 @@ const (
     TokenClient module.Token = "redis.client"
     TokenPrefix module.Token = "redis.key_prefix"
 )
+
+type Tokens struct {
+    Client module.Token
+    Prefix module.Token
+}
+
+func NamedTokens(name string) Tokens
 ```
 
 Optional capability tokens:
@@ -74,6 +81,16 @@ const (
     TokenRateLimitStore module.Token = "redis.ratelimit.store"
 )
 ```
+
+`NamedTokens(name)` contract:
+
+1. `name == ""` returns default tokens (`TokenClient`, `TokenPrefix`).
+2. non-empty `name` returns deterministic namespaced tokens:
+   - `redis.<name>.client`
+   - `redis.<name>.key_prefix`
+3. invalid names fail at module construction with typed validation errors.
+
+Capability modules should mirror the same namespacing convention for non-default instances.
 
 ### 6.2 Base Redis Module
 
@@ -87,6 +104,11 @@ Exports:
 2. `redismodule.TokenPrefix` (for key namespace hygiene)
 
 `NewModule(opts Options) module.Module` pattern matches existing module constructors.
+
+`Options` must include an optional `Name string` field for namespaced token selection:
+
+1. empty name uses default tokens,
+2. non-empty name uses `NamedTokens(name)`.
 
 ### 6.3 Capability Modules
 
@@ -137,6 +159,10 @@ Behavior requirements:
 2. cleanup hook closes client,
 3. optional startup ping controlled by explicit config,
 4. typed errors for connection/config failures.
+5. startup ping behavior must be explicit and deterministic:
+   - when enabled, `Build` runs ping with configured timeout before returning,
+   - when disabled, `Build` skips ping and documents deferred connectivity failure risk.
+6. cleanup errors must propagate through existing app close aggregation semantics.
 
 ## 9. Modular Alignment Check and Suggested Improvements
 
@@ -162,12 +188,16 @@ No core kernel changes are required for this design.
 2. provider build error typing,
 3. cleanup idempotency and error propagation,
 4. key prefix normalization behavior.
+5. `NamedTokens("")` returns default tokens.
+6. namespaced tokens are deterministic and collision-free for distinct names.
 
 ### 10.2 Integration Tests
 
 1. Redis testcontainers smoke test for base client module,
 2. cache/session/rate-limit capability module roundtrips,
 3. visibility tests for non-exported internals.
+4. multi-instance smoke test validates two Redis modules can coexist safely.
+5. Docker-required tests are skipped deterministically when Docker is unavailable.
 
 ### 10.3 Compatibility Tests
 
@@ -212,6 +242,7 @@ This phase is complete when all are true:
 3. Session/rate-limit capability modules are specified and have runnable example coverage.
 4. Lifecycle cleanup and error typing are tested.
 5. Docs define clear key-prefix and TTL conventions.
+6. Named-token multi-instance path is documented and tested.
 
 ## 14. Risks and Mitigations
 
