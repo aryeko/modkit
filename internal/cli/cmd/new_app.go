@@ -131,7 +131,9 @@ func resolveScaffoldModkitVersion() string {
 
 	if info, ok := debug.ReadBuildInfo(); ok {
 		if v := normalizeSemver(info.Main.Version); v != "" {
-			return v
+			if isStableTagVersion(v) {
+				return v
+			}
 		}
 	}
 
@@ -156,4 +158,12 @@ func normalizeSemver(v string) string {
 	}
 
 	return "v" + v
+}
+
+func isStableTagVersion(v string) bool {
+	if v == "" {
+		return false
+	}
+
+	return !strings.ContainsAny(v, "-+")
 }

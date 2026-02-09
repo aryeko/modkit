@@ -90,6 +90,29 @@ func TestNormalizeSemver(t *testing.T) {
 	}
 }
 
+func TestIsStableTagVersion(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want bool
+	}{
+		{name: "stable tag", in: "v0.14.1", want: true},
+		{name: "pseudo version", in: "v0.0.0-20260209085719-e619ca0f7c81", want: false},
+		{name: "prerelease", in: "v1.0.0-rc.1", want: false},
+		{name: "build metadata", in: "v1.0.0+meta", want: false},
+		{name: "empty", in: "", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isStableTagVersion(tt.in)
+			if got != tt.want {
+				t.Fatalf("isStableTagVersion(%q)=%v, want %v", tt.in, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCreateNewAppInvalidName(t *testing.T) {
 	if err := createNewApp("../bad"); err == nil {
 		t.Fatal("expected error for invalid app name")
