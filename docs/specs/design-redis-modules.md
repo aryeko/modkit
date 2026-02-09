@@ -196,7 +196,7 @@ No core kernel changes are required for this design.
 
 ### 10.2 Integration Tests
 
-1. Redis testcontainers smoke test for base client module,
+1. Redis Testcontainers smoke test for base client module,
 2. cache/session/rate-limit capability module roundtrips,
 3. visibility tests for non-exported internals.
 4. multi-instance smoke test validates two Redis modules can coexist safely.
@@ -210,7 +210,7 @@ No core kernel changes are required for this design.
 ## 11. Documentation Deliverables
 
 1. New guide: `docs/guides/redis-patterns.md`.
-2. Update `docs/guides/middleware.md` with Redis-backed rate limiting option.
+2. Update `docs/guides/middleware.md` with Redis-backed rate-limiting option.
 3. Update `README.md` feature matrix with Redis cache/session/rate-limit examples.
 4. Add explicit section for key namespace and TTL policy conventions.
 
