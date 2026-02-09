@@ -139,6 +139,7 @@ Optional:
 - `POSTGRES_MAX_OPEN_CONNS`
 - `POSTGRES_MAX_IDLE_CONNS`
 - `POSTGRES_CONN_MAX_LIFETIME`
+- `POSTGRES_CONNECT_TIMEOUT` (default `0`, disables startup ping)
 
 ### 7.2 SQLite
 
@@ -150,6 +151,7 @@ Optional:
 
 - `SQLITE_BUSY_TIMEOUT`
 - `SQLITE_JOURNAL_MODE`
+- `SQLITE_CONNECT_TIMEOUT` (default `0`, disables startup ping)
 
 Config values are resolved through `modkit/config` helpers and exported as explicit tokens in app config modules.
 
@@ -167,9 +169,10 @@ Behavior requirements:
 1. Provider remains lazy singleton.
 2. Cleanup remains LIFO through existing kernel lifecycle.
 3. Visibility remains unchanged; only exported tokens are reachable.
-4. "Fail fast" means provider `Build` must validate connectivity using `db.PingContext(ctx)` before returning success.
-5. Ping timeout must be explicit and configurable (for example `POSTGRES_CONNECT_TIMEOUT`, `SQLITE_CONNECT_TIMEOUT`).
-6. Ping failures return typed provider build errors with wrapped root cause and token context.
+4. Startup connectivity check is optional and explicitly config-driven in provider `Build`.
+5. `Build` calls `db.PingContext(ctx)` only when configured timeout is non-zero via `POSTGRES_CONNECT_TIMEOUT` or `SQLITE_CONNECT_TIMEOUT`.
+6. Default behavior is no startup ping (`*_CONNECT_TIMEOUT=0`), with connectivity failures surfacing on first DB use.
+7. When ping is enabled, it must run with the configured timeout and return typed provider build errors with wrapped root cause and token context.
 
 ## 9. Modular Alignment Check and Suggested Improvements
 
@@ -199,6 +202,8 @@ Per driver module:
 4. `NamedTokens("")` returns default tokens.
 5. `NamedTokens("analytics")` returns deterministic namespaced tokens.
 6. Invalid names fail with typed errors.
+7. `*_CONNECT_TIMEOUT=0` skips startup ping.
+8. Non-zero `*_CONNECT_TIMEOUT` enables startup ping and wraps ping failures with typed errors.
 
 ### 10.2 Integration Tests
 

@@ -88,9 +88,12 @@ const (
 2. non-empty `name` returns deterministic namespaced tokens:
    - `redis.<name>.client`
    - `redis.<name>.key_prefix`
-3. invalid names fail at module construction with typed validation errors.
+3. invalid names (empty after trim or containing spaces) fail at module construction with typed validation errors.
+4. capability tokens follow the same rule:
+   - default: `redis.cache.store`, `redis.session.store`, `redis.ratelimit.store`
+   - non-default: `redis.<name>.cache.store`, `redis.<name>.session.store`, `redis.<name>.ratelimit.store`
 
-Capability modules should mirror the same namespacing convention for non-default instances.
+Capability modules must use this namespacing convention for non-default instances.
 
 ### 6.2 Base Redis Module
 
