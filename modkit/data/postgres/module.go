@@ -10,7 +10,10 @@ import (
 	"github.com/go-modkit/modkit/modkit/module"
 )
 
-const driverName = "postgres"
+const (
+	driverName     = "postgres"
+	moduleNameBase = "data.postgres"
+)
 
 // Options configures a Postgres provider module.
 type Options struct {
@@ -42,19 +45,12 @@ func (m *Module) Definition() module.ModuleDef {
 
 	toks, err := sqlmodule.NamedTokens(m.opts.Name)
 	if err != nil {
-		return module.ModuleDef{
-			Name:    "data.postgres",
-			Imports: []module.Module{configMod},
-			Providers: []module.ProviderDef{{
-				Token: "data.postgres.invalid",
-				Build: func(_ module.Resolver) (any, error) { return nil, err },
-			}},
-		}
+		return invalidModuleDef(err)
 	}
 
 	var db *sql.DB
 	return module.ModuleDef{
-		Name:    "data.postgres",
+		Name:    moduleName(m.opts.Name),
 		Imports: []module.Module{configMod},
 		Providers: []module.ProviderDef{
 			{
@@ -79,6 +75,25 @@ func (m *Module) Definition() module.ModuleDef {
 			},
 		},
 		Exports: []module.Token{toks.DB, toks.Dialect},
+	}
+}
+
+func moduleName(name string) string {
+	if name == "" {
+		return moduleNameBase
+	}
+	return moduleNameBase + "." + name
+}
+
+func invalidModuleDef(err error) module.ModuleDef {
+	return module.ModuleDef{
+		Name: moduleNameBase + ".invalid",
+		Controllers: []module.ControllerDef{{
+			Name: "InvalidPostgresModule",
+			Build: func(_ module.Resolver) (any, error) {
+				return nil, err
+			},
+		}},
 	}
 }
 
