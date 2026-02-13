@@ -1,4 +1,4 @@
-FROM golang:1.25
+FROM golang:1.25.7
 
 WORKDIR /repo/examples/hello-mysql
 

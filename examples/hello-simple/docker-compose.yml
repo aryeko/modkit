@@ -1,0 +1,7 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: examples/hello-simple/Dockerfile
+    ports:
+      - "8080:8080"
