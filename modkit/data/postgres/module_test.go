@@ -172,6 +172,21 @@ func TestPingFailureReturnsTypedBuildErrorAndClosesDB(t *testing.T) {
 	}
 }
 
+func TestMaxIdleConnsZeroDisablesIdlePoolWhenExplicit(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "25ms")
+	t.Setenv("POSTGRES_MAX_IDLE_CONNS", "0")
+
+	h := testkit.New(t, NewModule(Options{}))
+	db := testkit.Get[*sql.DB](t, h, sqlmodule.TokenDB)
+
+	stats := db.Stats()
+	if stats.Idle != 0 {
+		t.Fatalf("expected idle=0, got %d", stats.Idle)
+	}
+}
+
 func TestMultiplePostgresInstancesBootstrap(t *testing.T) {
 	testDrv.Reset()
 	t.Setenv("POSTGRES_DSN", "test")
@@ -185,11 +200,12 @@ func TestMultiplePostgresInstancesBootstrap(t *testing.T) {
 	if err != nil {
 		t.Fatalf("analytics tokens: %v", err)
 	}
+	configMod := DefaultConfigModule()
 
 	root := &multiInstanceRootModule{
 		imports: []module.Module{
-			NewModule(Options{Name: "primary"}),
-			NewModule(Options{Name: "analytics"}),
+			NewModule(Options{Name: "primary", Config: configMod}),
+			NewModule(Options{Name: "analytics", Config: configMod}),
 		},
 		exports: []module.Token{
 			primaryTokens.DB,

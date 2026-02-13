@@ -31,7 +31,7 @@ type Module struct {
 // NewModule constructs a Postgres provider module.
 func NewModule(opts Options) module.Module {
 	if opts.Config == nil {
-		opts.Config = DefaultConfigModule()
+		opts.Config = configModule(opts.Name)
 	}
 	return &Module{opts: opts}
 }
@@ -40,7 +40,7 @@ func NewModule(opts Options) module.Module {
 func (m *Module) Definition() module.ModuleDef {
 	configMod := m.opts.Config
 	if configMod == nil {
-		configMod = DefaultConfigModule()
+		configMod = configModule(m.opts.Name)
 	}
 
 	toks, err := sqlmodule.NamedTokens(m.opts.Name)
@@ -110,6 +110,10 @@ func buildDB(r module.Resolver, dbToken module.Token) (*sql.DB, error) {
 	if err != nil {
 		return nil, &BuildError{Token: dbToken, Stage: StageResolveConfig, Err: fmt.Errorf("max_idle_conns: %w", err)}
 	}
+	maxIdleSet, err := module.Get[bool](r, tokenMaxIdleConnsSet)
+	if err != nil {
+		return nil, &BuildError{Token: dbToken, Stage: StageResolveConfig, Err: fmt.Errorf("max_idle_conns_set: %w", err)}
+	}
 	maxLifetime, err := module.Get[time.Duration](r, TokenConnMaxLifetime)
 	if err != nil {
 		return nil, &BuildError{Token: dbToken, Stage: StageResolveConfig, Err: fmt.Errorf("conn_max_lifetime: %w", err)}
@@ -140,7 +144,7 @@ func buildDB(r module.Resolver, dbToken module.Token) (*sql.DB, error) {
 	if maxOpen > 0 {
 		db.SetMaxOpenConns(maxOpen)
 	}
-	if maxIdle > 0 {
+	if maxIdleSet {
 		db.SetMaxIdleConns(maxIdle)
 	}
 	if maxLifetime > 0 {
