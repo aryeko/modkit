@@ -84,7 +84,7 @@ func (m *UserServiceModule) Definition() module.ModuleDef {
 		t.Fatalf("createNewProvider failed: %v", err)
 	}
 
-	b, err := os.ReadFile(filepath.Join(moduleDir, "auth.go"))
+	b, err := os.ReadFile(filepath.Join(moduleDir, "auth.go")) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,7 +312,7 @@ func (m *UsersModule) Definition() module.ModuleDef {
 		t.Fatalf("createNewProvider failed: %v", err)
 	}
 
-	b, err := os.ReadFile(modulePath)
+	b, err := os.ReadFile(modulePath) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -340,10 +340,10 @@ func TestCreateNewProviderCreateFileFailure(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(moduleDir, 0o500); err != nil {
+	if err := os.Chmod(moduleDir, 0o500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) }) //nolint:gosec
 
 	if err := createNewProvider("auth", "users"); err == nil {
 		t.Fatal("expected error when provider file cannot be created")

@@ -33,7 +33,7 @@ func TestServe_ReturnsErrorWhenServerFailsToStart(t *testing.T) {
 	}
 
 	router := NewRouter()
-	err := Serve("127.0.0.1:12345", router)
+	err := Serve("127.0.0.1:12345", router) //nolint:gosec
 
 	if gotAddr != "127.0.0.1:12345" {
 		t.Fatalf("expected addr %q, got %q", "127.0.0.1:12345", gotAddr)
@@ -77,7 +77,7 @@ func TestServe_HandlesSignals_ReturnsNil(t *testing.T) {
 
 			errCh := make(chan error, 1)
 			go func() {
-				errCh <- Serve("127.0.0.1:12345", NewRouter())
+				errCh <- Serve("127.0.0.1:12345", NewRouter()) //nolint:gosec
 			}()
 
 			<-serveStarted
@@ -135,7 +135,7 @@ func TestServe_ShutdownWaitsForInFlightRequest(t *testing.T) {
 
 	serveErrCh := make(chan error, 1)
 	go func() {
-		serveErrCh <- Serve(addr, handler)
+		serveErrCh <- Serve(addr, handler) //nolint:gosec
 	}()
 
 	clientErrCh := make(chan error, 1)

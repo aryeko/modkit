@@ -12,6 +12,7 @@ linters:
     - staticcheck
     - govet
     - unused
+    - gosec
     - bodyclose
     - nilerr
     
@@ -36,6 +37,13 @@ formatters:
       local-prefixes: github.com/go-modkit/modkit
 
 linters-settings:
+  gosec:
+    excludes:
+      - G101
+      - G302
+      - G304
+      - G306
+      - G114
   govet:
     enable:
       - nilness
@@ -66,7 +74,7 @@ issues:
 
   exclude-rules:
     # Relax rules for tests
-    - path: ".*_test\\.go$"
+    - path: '.*_test\.go$'
       linters:
         - errcheck
         - dupl

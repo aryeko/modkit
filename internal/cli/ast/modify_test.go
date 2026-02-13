@@ -38,7 +38,7 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("AddProvider failed: %v", err)
 	}
 
-	b, err := os.ReadFile(file)
+	b, err := os.ReadFile(file) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,7 +178,7 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("Duplicate AddProvider should succeed idempotently: %v", err)
 	}
 
-	b, err := os.ReadFile(file)
+	b, err := os.ReadFile(file) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -220,7 +220,7 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("AddController failed: %v", err)
 	}
 
-	b, err := os.ReadFile(file)
+	b, err := os.ReadFile(file) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatalf("Duplicate AddController should succeed idempotently: %v", err)
 	}
 
-	b, err := os.ReadFile(file)
+	b, err := os.ReadFile(file) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -555,10 +555,10 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatal(err)
 	}
 
-	if err := os.Chmod(moduleDir, 0o500); err != nil {
+	if err := os.Chmod(moduleDir, 0o500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) }) //nolint:gosec
 
 	err := AddProvider(file, "users.auth", "buildAuth")
 	if err == nil {
@@ -601,10 +601,10 @@ func (m *Module) Definition() module.ModuleDef {
 		t.Fatal(err)
 	}
 
-	if err := os.Chmod(moduleDir, 0o500); err != nil {
+	if err := os.Chmod(moduleDir, 0o500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) }) //nolint:gosec
 
 	err := AddController(file, "UsersController", "NewUsersController")
 	if err == nil {

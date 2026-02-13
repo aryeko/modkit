@@ -42,7 +42,7 @@ func mod(
 }
 
 func TestWithTyped_DefaultAndParse(t *testing.T) {
-	const token module.Token = "config.jwt_ttl"
+	const token module.Token = "config.jwt_ttl" //nolint:gosec
 	def := 1 * time.Hour
 
 	cfgModule := config.NewModule(
@@ -76,7 +76,7 @@ func TestWithTyped_DefaultAndParse(t *testing.T) {
 }
 
 func TestWithTyped_UsesDefaultWhenUnset(t *testing.T) {
-	const token module.Token = "config.http_addr"
+	const token module.Token = "config.http_addr" //nolint:gosec
 	def := ":8080"
 
 	cfgModule := config.NewModule(
@@ -105,7 +105,7 @@ func TestWithTyped_UsesDefaultWhenUnset(t *testing.T) {
 }
 
 func TestWithTyped_OptionalUnsetReturnsZeroWithoutParsing(t *testing.T) {
-	const token module.Token = "config.optional_int"
+	const token module.Token = "config.optional_int" //nolint:gosec
 	called := false
 
 	cfgModule := config.NewModule(
@@ -145,7 +145,7 @@ func TestWithTyped_OptionalUnsetReturnsZeroWithoutParsing(t *testing.T) {
 }
 
 func TestWithTyped_MissingRequired(t *testing.T) {
-	const token module.Token = "config.jwt_secret"
+	const token module.Token = "config.jwt_secret" //nolint:gosec
 
 	cfgModule := config.NewModule(
 		config.WithSource(mapSource{}),
@@ -187,7 +187,7 @@ func TestWithTyped_MissingRequired(t *testing.T) {
 }
 
 func TestWithTyped_ParseError(t *testing.T) {
-	const token module.Token = "config.rate_limit_burst"
+	const token module.Token = "config.rate_limit_burst" //nolint:gosec
 
 	cfgModule := config.NewModule(
 		config.WithSource(mapSource{"RATE_LIMIT_BURST": "NaN"}),
@@ -223,7 +223,7 @@ func TestWithTyped_ParseError(t *testing.T) {
 
 func TestWithTyped_InvalidSpec(t *testing.T) {
 	t.Run("empty key", func(t *testing.T) {
-		const token module.Token = "config.foo"
+		const token module.Token = "config.foo" //nolint:gosec
 		cfgModule := config.NewModule(
 			config.WithSource(mapSource{"X": "1"}),
 			config.WithTyped(token, config.ValueSpec[int]{
@@ -276,7 +276,7 @@ func TestWithTyped_InvalidSpec(t *testing.T) {
 }
 
 func TestWithTyped_SensitiveErrorDoesNotLeakValue(t *testing.T) {
-	const token module.Token = "config.jwt_secret"
+	const token module.Token = "config.jwt_secret" //nolint:gosec
 
 	cfgModule := config.NewModule(
 		config.WithSource(mapSource{"JWT_SECRET": "super-secret-value"}),
@@ -305,7 +305,7 @@ func TestWithTyped_SensitiveErrorDoesNotLeakValue(t *testing.T) {
 }
 
 func TestWithSourceNil(t *testing.T) {
-	const token module.Token = "config.foo"
+	const token module.Token = "config.foo" //nolint:gosec
 
 	cfgModule := config.NewModule(
 		config.WithSource(nil),
@@ -334,7 +334,7 @@ func TestWithSourceNil(t *testing.T) {
 }
 
 func TestNoReflectionMagic_CustomParser(t *testing.T) {
-	const token module.Token = "config.custom"
+	const token module.Token = "config.custom" //nolint:gosec
 
 	parseCustom := func(raw string) (string, error) {
 		if raw != "expected" {

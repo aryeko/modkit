@@ -43,7 +43,7 @@ func (m *UserServiceModule) Definition() module.ModuleDef {
 		t.Fatalf("createNewController failed: %v", err)
 	}
 
-	b, err := os.ReadFile(filepath.Join(moduleDir, "auth_controller.go"))
+	b, err := os.ReadFile(filepath.Join(moduleDir, "auth_controller.go")) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,10 +252,10 @@ func TestCreateNewControllerCreateFileFailure(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(moduleDir, "module.go"), []byte("package users\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Chmod(moduleDir, 0o500); err != nil {
+	if err := os.Chmod(moduleDir, 0o500); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) })
+	t.Cleanup(func() { _ = os.Chmod(moduleDir, 0o750) }) //nolint:gosec
 
 	if err := createNewController("auth", "users"); err == nil {
 		t.Fatal("expected error when controller file cannot be created")

@@ -61,7 +61,7 @@ func TestCreateNewApp(t *testing.T) {
 		shim = filepath.Join(binDir, "go.bat")
 		content = "@echo off\r\nexit /b 0\r\n"
 	}
-	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil {
+	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
 
@@ -79,7 +79,7 @@ func TestCreateNewApp(t *testing.T) {
 		t.Fatalf("expected go.mod, got %v", err)
 	}
 
-	modBytes, err := os.ReadFile(filepath.Join(tmp, "demo", "go.mod"))
+	modBytes, err := os.ReadFile(filepath.Join(tmp, "demo", "go.mod")) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +194,7 @@ func TestCreateNewAppExistingEmptyDirectory(t *testing.T) {
 		shim = filepath.Join(binDir, "go.bat")
 		content = "@echo off\r\nexit /b 0\r\n"
 	}
-	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil {
+	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
 	oldPath := os.Getenv("PATH")
@@ -262,7 +262,7 @@ func TestCreateNewAppRunE(t *testing.T) {
 		shim = filepath.Join(binDir, "go.bat")
 		content = "@echo off\r\nexit /b 0\r\n"
 	}
-	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil {
+	if err := os.WriteFile(shim, []byte(content), 0o755); err != nil { //nolint:gosec
 		t.Fatal(err)
 	}
 	oldPath := os.Getenv("PATH")
