@@ -8,13 +8,13 @@ import (
 
 func TestBuildErrorIncludesProvider(t *testing.T) {
 	inner := errors.New("boom")
-	be := &BuildError{Provider: "postgres", Token: "db", Stage: StageOpen, Err: inner}
+	be := &BuildError{Provider: "postgres", Token: TokenDB, Stage: StageOpen, Err: inner}
 	msg := be.Error()
 
 	if !strings.Contains(msg, "postgres provider build failed") {
 		t.Fatalf("expected provider in message, got %q", msg)
 	}
-	if !strings.Contains(msg, "token=\"db\"") {
+	if !strings.Contains(msg, "token=\"database.db\"") {
 		t.Fatalf("expected token in message, got %q", msg)
 	}
 	if !strings.Contains(msg, "stage=open") {
@@ -27,7 +27,7 @@ func TestBuildErrorIncludesProvider(t *testing.T) {
 
 func TestBuildErrorWithEmptyProviderUsesGenericPrefix(t *testing.T) {
 	inner := errors.New("boom")
-	be := &BuildError{Token: "db", Stage: StageOpen, Err: inner}
+	be := &BuildError{Token: TokenDB, Stage: StageOpen, Err: inner}
 	msg := be.Error()
 
 	if !strings.Contains(msg, "sql provider build failed") {
