@@ -153,6 +153,119 @@ func TestConnectTimeoutPingBehavior(t *testing.T) {
 	}
 }
 
+func TestResolveConfigErrorReturnsBuildError(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_MAX_OPEN_CONNS", "nope")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "0")
+
+	h := testkit.New(t, NewModule(Options{}))
+	_, err := testkit.GetE[*sql.DB](h, sqlmodule.TokenDB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	var be *BuildError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BuildError, got %T", err)
+	}
+	if be.Stage != StageResolveConfig {
+		t.Fatalf("expected stage=%s, got %s", StageResolveConfig, be.Stage)
+	}
+}
+
+func TestNegativeMaxOpenConnsReturnsInvalidConfig(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_MAX_OPEN_CONNS", "-1")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "0")
+
+	h := testkit.New(t, NewModule(Options{}))
+	_, err := testkit.GetE[*sql.DB](h, sqlmodule.TokenDB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	var be *BuildError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BuildError, got %T", err)
+	}
+	if be.Stage != StageInvalidConfig {
+		t.Fatalf("expected stage=%s, got %s", StageInvalidConfig, be.Stage)
+	}
+}
+
+func TestNegativeMaxIdleConnsReturnsInvalidConfig(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_MAX_IDLE_CONNS", "-1")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "0")
+
+	h := testkit.New(t, NewModule(Options{}))
+	_, err := testkit.GetE[*sql.DB](h, sqlmodule.TokenDB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	var be *BuildError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BuildError, got %T", err)
+	}
+	if be.Stage != StageInvalidConfig {
+		t.Fatalf("expected stage=%s, got %s", StageInvalidConfig, be.Stage)
+	}
+}
+
+func TestNegativeConnMaxLifetimeReturnsInvalidConfig(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_CONN_MAX_LIFETIME", "-1s")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "0")
+
+	h := testkit.New(t, NewModule(Options{}))
+	_, err := testkit.GetE[*sql.DB](h, sqlmodule.TokenDB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	var be *BuildError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BuildError, got %T", err)
+	}
+	if be.Stage != StageInvalidConfig {
+		t.Fatalf("expected stage=%s, got %s", StageInvalidConfig, be.Stage)
+	}
+}
+
+func TestNegativeConnectTimeoutReturnsInvalidConfig(t *testing.T) {
+	testDrv.Reset()
+	t.Setenv("POSTGRES_DSN", "test")
+	t.Setenv("POSTGRES_CONNECT_TIMEOUT", "-1s")
+
+	h := testkit.New(t, NewModule(Options{}))
+	_, err := testkit.GetE[*sql.DB](h, sqlmodule.TokenDB)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	var be *BuildError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected BuildError, got %T", err)
+	}
+	if be.Stage != StageInvalidConfig {
+		t.Fatalf("expected stage=%s, got %s", StageInvalidConfig, be.Stage)
+	}
+}
+
+func TestModuleNameUsesSuffixWhenProvided(t *testing.T) {
+	if moduleName("") != moduleNameBase {
+		t.Fatalf("expected base module name")
+	}
+	if moduleName("analytics") != moduleNameBase+".analytics" {
+		t.Fatalf("expected named module suffix")
+	}
+}
+
 func TestPingFailureReturnsTypedBuildErrorAndClosesDB(t *testing.T) {
 	testDrv.Reset()
 	pingErr := errors.New("ping failed")
