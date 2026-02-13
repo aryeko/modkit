@@ -155,6 +155,12 @@ func main() {
 | Validation | [Validation Guide](docs/guides/validation.md) | [`examples/hello-mysql/internal/validation/`](examples/hello-mysql/internal/validation/) + [`examples/hello-mysql/internal/modules/users/types.go`](examples/hello-mysql/internal/modules/users/types.go) | [`examples/hello-mysql/internal/modules/users/validation_test.go`](examples/hello-mysql/internal/modules/users/validation_test.go) |
 | Middleware | [Middleware Guide](docs/guides/middleware.md) | [`examples/hello-mysql/internal/middleware/`](examples/hello-mysql/internal/middleware/) + [`examples/hello-mysql/internal/httpserver/server.go`](examples/hello-mysql/internal/httpserver/server.go) | [`examples/hello-mysql/internal/middleware/middleware_test.go`](examples/hello-mysql/internal/middleware/middleware_test.go) |
 | Lifecycle and Cleanup | [Lifecycle Guide](docs/guides/lifecycle.md) | [`examples/hello-mysql/internal/lifecycle/cleanup.go`](examples/hello-mysql/internal/lifecycle/cleanup.go) + [`examples/hello-mysql/cmd/api/main.go`](examples/hello-mysql/cmd/api/main.go) | [`examples/hello-mysql/internal/lifecycle/lifecycle_test.go`](examples/hello-mysql/internal/lifecycle/lifecycle_test.go) |
+| Database Providers | [Database Providers Guide](docs/guides/database-providers.md) | [`examples/hello-postgres/`](examples/hello-postgres/) + [`examples/hello-sqlite/`](examples/hello-sqlite/) | [`examples/hello-postgres/internal/smoke/smoke_test.go`](examples/hello-postgres/internal/smoke/smoke_test.go) + [`examples/hello-sqlite/internal/smoke/smoke_test.go`](examples/hello-sqlite/internal/smoke/smoke_test.go) |
+
+Migration note: if you used the MySQL example tokens (`database.TokenDB`),
+prefer the shared SQL contract tokens (`sqlmodule.TokenDB`,
+`sqlmodule.TokenDialect`) going forward. The MySQL example preserves backward
+compatibility via token aliases.
 
 ## Packages
 
@@ -232,6 +238,8 @@ See [Architecture Guide](docs/architecture.md) for details.
 **Examples:**
 - [hello-simple](examples/hello-simple/) — Minimal example, no Docker
 - [hello-mysql](examples/hello-mysql/) — Full CRUD API with MySQL
+- [hello-postgres](examples/hello-postgres/) — Postgres provider + smoke tests
+- [hello-sqlite](examples/hello-sqlite/) — SQLite provider + fast local smoke tests
 
 ## How It Compares to NestJS
 

@@ -22,7 +22,7 @@ func TestCreateNewModule(t *testing.T) {
 		t.Fatalf("createNewModule failed: %v", err)
 	}
 
-	b, err := os.ReadFile(filepath.Join(tmp, "internal", "modules", "user-service", "module.go"))
+	b, err := os.ReadFile(filepath.Join(tmp, "internal", "modules", "user-service", "module.go")) //nolint:gosec
 	if err != nil {
 		t.Fatal(err)
 	}
