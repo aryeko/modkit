@@ -6,17 +6,21 @@ import (
 	"github.com/go-modkit/modkit/modkit/module"
 )
 
-type Module struct{}
+type Module struct {
+	postgres module.Module
+}
 
 func NewModule() module.Module {
-	return &Module{}
+	return &Module{
+		postgres: postgres.NewModule(postgres.Options{}),
+	}
 }
 
 func (m *Module) Definition() module.ModuleDef {
 	return module.ModuleDef{
 		Name: "app",
 		Imports: []module.Module{
-			postgres.NewModule(postgres.Options{}),
+			m.postgres,
 		},
 		Exports: []module.Token{
 			sqlmodule.TokenDB,
